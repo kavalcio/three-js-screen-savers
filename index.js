@@ -4,7 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
-const PIPE_BUILD_SPEED = 2;
+const PIPE_BUILD_SPEED = 3;
 const PIPE_RADIUS = 1;
 const DIRECTIONS = [
     new Vector3(0, 0, 1),
@@ -14,13 +14,14 @@ const DIRECTIONS = [
     new Vector3(0, 1, 0),
     new Vector3(0, -1, 0),
 ];
+const BOUNDS = {
+    min: { x: -130, y: -70, z: -130 },
+    max: { x: 130, y: 70, z: 70},
+};
 
 // TODO: prevent pipe from overlapping itself
-// TODO: randomize pipe length
-// TODO: prevent pipe from getting too far away from center
 // TODO: add ui and parameterize pipe length, pipe build speed, etc
 // TODO: add some more comments
-// TODO: use ThreeCSG to make corners look seamless
 function init() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -49,7 +50,7 @@ function init() {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
 
-    function createPipeNew({
+    function createPipe({
         parentMesh = null,
         start = new Vector3(0, 0, 0),
         end = new Vector3(0, 0, 0),
@@ -77,27 +78,31 @@ function init() {
         // Add to scene
         pipeList.push({ mesh, start, end, currentScale: 0 });
         scene.add(mesh);
-
-        // Show arrow helpers
-        // const arrowHelper = new THREE.ArrowHelper( direction, new Vector3(10, 0, 0), 2, '#00ff00' );
-        // const arrowHelper2 = new THREE.ArrowHelper( mesh.up, new Vector3(12, 0, 0), 2, '#ff0000' );
-        // const arrowHelper3 = new THREE.ArrowHelper( mesh.rotation, new Vector3(14, 0, 0), 2, '#0000ff' );
-        // scene.add( arrowHelper );
-        // scene.add( arrowHelper2 );
-        // scene.add( arrowHelper3 );
     }
 
-    function getRandomDirection(excludeDirection) {
-        const randomDirection = DIRECTIONS[getRandomInt(0, DIRECTIONS.length - 1)];
-        if (randomDirection.equals(excludeDirection)) {
-            return getRandomDirection(excludeDirection);
+    function getRandomEndpoint({ directions, oldEnd }) {
+        const randomDirection = directions[getRandomInt(0, directions.length - 1)];
+        const randomLength = getRandomInt(PIPE_LENGTH_MIN, PIPE_LENGTH_MAX);
+        const newEnd = oldEnd.clone().addScaledVector(randomDirection, randomLength);
+
+        if (
+            newEnd.x > BOUNDS.max.x ||
+            newEnd.x < BOUNDS.min.x ||
+            newEnd.y > BOUNDS.max.y ||
+            newEnd.y < BOUNDS.min.y ||
+            newEnd.z > BOUNDS.max.z ||
+            newEnd.z < BOUNDS.min.z
+        ) {
+            return getRandomEndpoint({ directions, oldEnd });
         }
-        return randomDirection;
+
+        return newEnd;
     }
 
-    createPipeNew({ start: new Vector3(20, 0, 0), end: new Vector3(30, 0, 0) });
-    createPipeNew({ start: new Vector3(-20, 10, 0), end: new Vector3(-20, 20, 0) });
-    createPipeNew({ start: new Vector3(0, -10, -40), end: new Vector3(0, -10, -50) });
+    // Initialize several pipes
+    createPipe({ start: new Vector3(20, 0, 0), end: new Vector3(30, 0, 0) });
+    createPipe({ start: new Vector3(-20, 10, 0), end: new Vector3(-20, 20, 0) });
+    createPipe({ start: new Vector3(0, -10, -40), end: new Vector3(0, -10, -50) });
 
     function animate() {
         requestAnimationFrame(animate);
@@ -129,10 +134,10 @@ function init() {
                 scene.add(sphere);
 
                 // Create new pipe
-                const randomDirection = getRandomDirection(direction.clone().normalize().multiplyScalar(-1));
-                const randomLength = getRandomInt(PIPE_LENGTH_MIN, PIPE_LENGTH_MAX);
-                const newEnd = pipe.end.clone().addScaledVector(randomDirection, randomLength);
-                createPipeNew({ parentMesh: pipe.mesh, start: pipe.end, end: newEnd });
+                const reverseDirection = direction.clone().normalize().multiplyScalar(-1);
+                const validDirections = DIRECTIONS.filter(direction => !direction.equals(reverseDirection));
+                const newEnd = getRandomEndpoint({ directions: validDirections, oldEnd: pipe.end });
+                createPipe({ parentMesh: pipe.mesh, start: pipe.end, end: newEnd });
             }
         });
 
