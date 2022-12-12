@@ -4,7 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
-const PIPE_BUILD_SPEED = 0.5;
+const PIPE_BUILD_SPEED = 2;
 const PIPE_RADIUS = 1;
 const DIRECTIONS = [
     new Vector3(0, 0, 1),
@@ -23,8 +23,8 @@ const DIRECTIONS = [
 // TODO: use ThreeCSG to make corners look seamless
 function init() {
     const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-    camera.position.z = 45;
+    const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.z = 70;
 
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
