@@ -15,23 +15,41 @@ const DIRECTIONS = [
     new Vector3(0, -1, 0),
 ];
 const BOUNDS = {
-    min: { x: -130, y: -70, z: -130 },
-    max: { x: 130, y: 70, z: 70},
+    min: { x: -130, y: -70, z: -140 },
+    max: { x: 130, y: 70, z: 60},
 };
 
 // TODO: prevent pipe from overlapping itself
 // TODO: add ui and parameterize pipe length, pipe build speed, etc
 // TODO: add some more comments
 function init() {
+    // Create scene
     const scene = new THREE.Scene();
+
+    // Create camera
     const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
     camera.position.z = 70;
+    const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
+    const initialWindowHeight = window.innerHeight;
 
+    function onWindowResize(event) {
+        // Adjust camera and renderer on window resize
+        camera.aspect = window.innerWidth / window.innerHeight;
+        camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
+        camera.updateProjectionMatrix();
+        camera.lookAt(scene.position);
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        renderer.render(scene, camera);
+    }
+    window.addEventListener('resize', onWindowResize, false);
+
+    // Create renderer
     const renderer = new THREE.WebGLRenderer();
     renderer.setSize(window.innerWidth, window.innerHeight);
     const controls = new OrbitControls(camera, renderer.domElement);
     document.body.appendChild(renderer.domElement);
 
+    // Create lights
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
 
@@ -40,6 +58,7 @@ function init() {
     directionalLight.position.z = 1;
     scene.add(directionalLight);
 
+    // Create pipes
     const pipeList = [];
 
     const getRandomColor = () => {
