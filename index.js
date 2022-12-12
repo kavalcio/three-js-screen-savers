@@ -95,7 +95,9 @@ function init() {
         return randomDirection;
     }
 
-    createPipeNew({ start: new Vector3(0, 0, 0), end: new Vector3(10, 0, 0) });
+    createPipeNew({ start: new Vector3(20, 0, 0), end: new Vector3(30, 0, 0) });
+    createPipeNew({ start: new Vector3(-20, 10, 0), end: new Vector3(-20, 20, 0) });
+    createPipeNew({ start: new Vector3(0, -10, -40), end: new Vector3(0, -10, -50) });
 
     function animate() {
         requestAnimationFrame(animate);
