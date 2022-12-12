@@ -5,6 +5,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
 const PIPE_BUILD_SPEED = 0.5;
+const PIPE_RADIUS = 1;
 const DIRECTIONS = [
     new Vector3(0, 0, 1),
     new Vector3(0, 0, -1),
@@ -14,12 +15,12 @@ const DIRECTIONS = [
     new Vector3(0, -1, 0),
 ];
 
-// TODO: add elbows to corners
 // TODO: prevent pipe from overlapping itself
 // TODO: randomize pipe length
 // TODO: prevent pipe from getting too far away from center
 // TODO: add ui and parameterize pipe length, pipe build speed, etc
 // TODO: add some more comments
+// TODO: use ThreeCSG to make corners look seamless
 function init() {
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
@@ -58,7 +59,7 @@ function init() {
         if (parentMesh) {
             mesh = parentMesh.clone();
         } else {
-            const geometry = new THREE.CylinderGeometry(1, 1, 1, 32);
+            const geometry = new THREE.CylinderGeometry(PIPE_RADIUS, PIPE_RADIUS, 1, 32);
             const material = new THREE.MeshPhongMaterial({ color: getRandomColor() });
             mesh = new THREE.Mesh(geometry, material);
         }
@@ -117,6 +118,13 @@ function init() {
             } else {
                 // Pipe is done, remove from list
                 pipeList.splice(index, 1);
+
+                // Create sphere at corner
+                const geometry = new THREE.SphereGeometry(PIPE_RADIUS, 32, 32);
+                const material = new THREE.MeshPhongMaterial({ color: pipe.mesh.material.color.getHex() });
+                const sphere = new THREE.Mesh(geometry, material);
+                sphere.position.copy(pipe.end);
+                scene.add(sphere);
 
                 // Create new pipe
                 const randomDirection = getRandomDirection(direction.clone().normalize().multiplyScalar(-1));
