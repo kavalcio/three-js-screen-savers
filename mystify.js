@@ -7,6 +7,13 @@ import { GUI } from 'dat.gui';
 // TODO: keep chains in an array, pop and delete the oldest chain when the array gets too long
 // TODO: add my name to page header for every page
 // TODO: change color over time
+
+const WIDTH = 120;
+const HEIGHT = 80;
+const ECHO_COUNT = 10;
+const VERTEX_COUNT = 5;
+const POLYGON_COUNT = 2;
+
 function init() {
     // Create scene
     const scene = new THREE.Scene();
@@ -36,14 +43,14 @@ function init() {
 
     // Create GUI
     const gui = new GUI();
+    // gui.add({ reset }, 'reset');
+
 
     // Create lights
     const ambientLight = new THREE.AmbientLight(0x404040);
     scene.add(ambientLight);
 
     // Bounding box
-    const WIDTH = 120;
-    const HEIGHT = 80;
     const boundingBox = new THREE.Box2(new Vector2(-WIDTH / 2, -HEIGHT / 2), new Vector2(WIDTH / 2, HEIGHT / 2));
     const boxPlane = new THREE.PlaneGeometry(WIDTH, HEIGHT);
     const boxEdges = new THREE.EdgesGeometry(boxPlane);
@@ -53,33 +60,26 @@ function init() {
 
     const edgeMaterial = new THREE.LineBasicMaterial({ color: '#00ffff' });
 
-    const chain = {
-        vertices: [],
-        object: null,
+    const createPolygon = () => {
+        const polygon = {
+            vertices: [],
+            echoes: [],
+        };
+        // Create vertices for VERTEX_COUNT
+        for (let i = 0; i < VERTEX_COUNT; i++) {
+            polygon.vertices.push({
+                position: new Vector2(Math.random() * WIDTH - WIDTH / 2, Math.random() * HEIGHT - HEIGHT / 2),
+                velocity: new Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize(),
+            });
+        }
+        return polygon;
     };
 
-    chain.vertices.push({
-        position: new Vector2(10, 20),
-        velocity: new Vector2(-0.6, 0.9),
-    });
-    chain.vertices.push({
-        position: new Vector2(0, 0),
-        velocity: new Vector2(1, 0.5),
-    });
-    chain.vertices.push({
-        position: new Vector2(-10, -30),
-        velocity: new Vector2(-1, 1.5),
-    });
-    chain.vertices.push({
-        position: new Vector2(0, 10),
-        velocity: new Vector2(0.8, 0.9),
-    });
-
-    const curveObject = new THREE.Line(new THREE.BufferGeometry(), edgeMaterial);
-    scene.add(curveObject);
-    chain.object = curveObject;
-
+    // Create polygons
     const polygons = [];
+    for (let i = 0; i < POLYGON_COUNT; i++) {
+        polygons.push(createPolygon());
+    }
 
     function movePoint(point, velocity) {
         let newX = point.x + velocity.x;
@@ -105,50 +105,49 @@ function init() {
         point.y = newY;
     }
 
-    // TODO: close curve. maybe use CurvePath?
     function animate() {
         requestAnimationFrame(animate);
 
-        // Move vertices
-        chain.vertices.forEach((point) => {
-            movePoint(point.position, point.velocity);
-        });
+        polygons.forEach(polygon => {
+            // Move vertices
+            polygon.vertices.forEach((point) => {
+                movePoint(point.position, point.velocity);
+            });
 
-        // Create new edges
-        const edges = [];
-        for (let i = 0; i < chain.vertices.length; i++) {
-            const point1 = chain.vertices[i].position;
-            let point2;
-            if (i === chain.vertices.length - 1) {
-                point2 = chain.vertices[0].position;
-            } else {
-                point2 = chain.vertices[i + 1].position;
+            // Create new edges
+            const edges = [];
+            for (let i = 0; i < polygon.vertices.length; i++) {
+                const point1 = polygon.vertices[i].position;
+                let point2;
+                if (i === polygon.vertices.length - 1) {
+                    point2 = polygon.vertices[0].position;
+                } else {
+                    point2 = polygon.vertices[i + 1].position;
+                }
+
+                const geometry = new THREE.BufferGeometry().setFromPoints([
+                    new Vector3(point1.x, point1.y, 0),
+                    new Vector3(point2.x, point2.y, 0)
+                ]);
+                const edge = new THREE.Line(geometry, edgeMaterial);
+                edges.push(edge);
+                scene.add(edge);
             }
 
-            const geometry = new THREE.BufferGeometry().setFromPoints([
-                new Vector3(point1.x, point1.y, 0),
-                new Vector3(point2.x, point2.y, 0)
-            ]);
-            const edge = new THREE.Line(geometry, edgeMaterial);
-            edges.push(edge);
-            scene.add(edge);
-        }
-
-        // Delete old edges
-        polygons.push(edges);
-        if (polygons.length > 10) {
-            const edgesToRemove = polygons.shift();
-            edgesToRemove.forEach(edge => {
-                scene.remove(edge);
-            });
-        }
+             // Delete old edges
+            polygon.echoes.push(edges);
+            if (polygon.echoes.length > ECHO_COUNT) {
+                const edgesToRemove = polygon.echoes.shift();
+                edgesToRemove.forEach(edge => {
+                    scene.remove(edge);
+                });
+            }
+        })
 
         renderer.render(scene, camera);
     };
 
     animate();
 }
-
-// init();
 
 export default init;
