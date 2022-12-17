@@ -3,7 +3,9 @@ import { Vector2, Vector3 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
-// TODO: create closed bezier curve, refer to this: https://stackoverflow.com/questions/27001117/3-and-4-degree-curves-in-three-js
+// TODO: add gui for speed, number of points per chain, number of chains, how many old chains to show
+// TODO: keep chains in an array, pop and delete the oldest chain when the array gets too long
+// TODO: add my name to page header for every page
 function init() {
     // Create scene
     const scene = new THREE.Scene();
@@ -122,20 +124,10 @@ function init() {
         movePoint(point3, pointVelocity3, sphere3);
         movePoint(point4, pointVelocity4, sphere4);
 
-        // const curve = new THREE.CubicBezierCurve( // Bezier
-        //     point1,
-        //     point2,
-        //     point3,
-        //     point4,
-        // );
-        const curve = new THREE.CatmullRomCurve3([ // CatmullRomSpline
+        const geometry = new THREE.BufferGeometry().setFromPoints([
             new Vector3(point1.x, point1.y, 0),
-            new Vector3(point2.x, point2.y, 0),
-            new Vector3(point3.x, point3.y, 0),
-            new Vector3(point4.x, point4.y, 0),
-        ], true);
-        const points = curve.getPoints(50);
-        const geometry = new THREE.BufferGeometry().setFromPoints(points);
+            new Vector3(point4.x, point4.y, 0)
+        ]);
         curveObject.geometry = geometry;
 
         renderer.render(scene, camera);

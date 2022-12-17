@@ -29,7 +29,8 @@ const PARAMS = {
 const pipeList = [];
 
 // TODO: prevent pipe from overlapping itself
-// TODO: add button to delete all pipes (dont delete other stuff in the scene)
+// TODO: add Apply button that applies gui params and deletes all pipes (dont delete other stuff in the scene, or just recreate them after deleting)
+// TODO: randomize starting point of pipes within a smaller bounding box
 function init() {
     // Create scene
     const scene = new THREE.Scene();
