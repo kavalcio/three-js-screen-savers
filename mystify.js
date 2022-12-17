@@ -6,6 +6,7 @@ import { GUI } from 'dat.gui';
 // TODO: add gui for speed, number of points per chain, number of chains, how many old chains to show
 // TODO: keep chains in an array, pop and delete the oldest chain when the array gets too long
 // TODO: add my name to page header for every page
+// TODO: change color over time
 function init() {
     // Create scene
     const scene = new THREE.Scene();
@@ -50,42 +51,37 @@ function init() {
     const line = new THREE.LineSegments(boxEdges, lineMaterial);
     scene.add(line);
 
-    // Points
-    const point1 = new Vector2(0, 0);
-    const sphereGeo = new THREE.SphereGeometry(0.5, 5, 5);
-    const sphereMat = new THREE.MeshBasicMaterial({ color: '#00ff00' });
-    const sphere1 = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere1.position.x = point1.x;
-    sphere1.position.y = point1.y;
-    scene.add(sphere1);
-    const point2 = new Vector2(20, 5);
-    const sphere2 = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere2.position.x = point2.x;
-    sphere2.position.y = point2.y;
-    scene.add(sphere2);
-    const point3 = new Vector2(20, 5);
-    const sphere3 = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere3.position.x = point3.x;
-    sphere3.position.y = point3.y;
-    scene.add(sphere3);
-    const point4 = new Vector2(20, 5);
-    const sphere4 = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere4.position.x = point4.x;
-    sphere4.position.y = point4.y;
-    scene.add(sphere4);
+    const edgeMaterial = new THREE.LineBasicMaterial({ color: '#00ffff' });
 
-    // Set point velocities
-    const pointVelocity1 = new Vector2(1, 0.5);
-    const pointVelocity2 = new Vector2(-0.6, 0.9);
-    const pointVelocity3 = new Vector2(-1, 1.2);
-    const pointVelocity4 = new Vector2(0.8, 0.9);
+    const chain = {
+        vertices: [],
+        object: null,
+    };
 
-    // Create curves
-    const curveMaterial = new THREE.LineBasicMaterial({ color: '#00ffff' });
-    const curveObject = new THREE.Line(new THREE.BufferGeometry(), curveMaterial);
+    chain.vertices.push({
+        position: new Vector2(10, 20),
+        velocity: new Vector2(-0.6, 0.9),
+    });
+    chain.vertices.push({
+        position: new Vector2(0, 0),
+        velocity: new Vector2(1, 0.5),
+    });
+    chain.vertices.push({
+        position: new Vector2(-10, -30),
+        velocity: new Vector2(-1, 1.5),
+    });
+    chain.vertices.push({
+        position: new Vector2(0, 10),
+        velocity: new Vector2(0.8, 0.9),
+    });
+
+    const curveObject = new THREE.Line(new THREE.BufferGeometry(), edgeMaterial);
     scene.add(curveObject);
+    chain.object = curveObject;
 
-    function movePoint(point, velocity, sphere) {
+    const polygons = [];
+
+    function movePoint(point, velocity) {
         let newX = point.x + velocity.x;
         let newY = point.y + velocity.y;
 
@@ -107,28 +103,45 @@ function init() {
 
         point.x = newX;
         point.y = newY;
-
-        if (sphere) {
-            sphere.position.x = point.x;
-            sphere.position.y = point.y;
-        }
     }
 
     // TODO: close curve. maybe use CurvePath?
     function animate() {
         requestAnimationFrame(animate);
 
-        // Move anchor points
-        movePoint(point1, pointVelocity1, sphere1);
-        movePoint(point2, pointVelocity2, sphere2);
-        movePoint(point3, pointVelocity3, sphere3);
-        movePoint(point4, pointVelocity4, sphere4);
+        // Move vertices
+        chain.vertices.forEach((point) => {
+            movePoint(point.position, point.velocity);
+        });
 
-        const geometry = new THREE.BufferGeometry().setFromPoints([
-            new Vector3(point1.x, point1.y, 0),
-            new Vector3(point4.x, point4.y, 0)
-        ]);
-        curveObject.geometry = geometry;
+        // Create new edges
+        const edges = [];
+        for (let i = 0; i < chain.vertices.length; i++) {
+            const point1 = chain.vertices[i].position;
+            let point2;
+            if (i === chain.vertices.length - 1) {
+                point2 = chain.vertices[0].position;
+            } else {
+                point2 = chain.vertices[i + 1].position;
+            }
+
+            const geometry = new THREE.BufferGeometry().setFromPoints([
+                new Vector3(point1.x, point1.y, 0),
+                new Vector3(point2.x, point2.y, 0)
+            ]);
+            const edge = new THREE.Line(geometry, edgeMaterial);
+            edges.push(edge);
+            scene.add(edge);
+        }
+
+        // Delete old edges
+        polygons.push(edges);
+        if (polygons.length > 10) {
+            const edgesToRemove = polygons.shift();
+            edgesToRemove.forEach(edge => {
+                scene.remove(edge);
+            });
+        }
 
         renderer.render(scene, camera);
     };
