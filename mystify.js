@@ -4,15 +4,14 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
 // TODO: add gui for speed, number of points per chain, number of chains, how many old chains to show
-// TODO: keep chains in an array, pop and delete the oldest chain when the array gets too long
-// TODO: add my name to page header for every page
 // TODO: change color over time
 
 const WIDTH = 120;
 const HEIGHT = 80;
-const ECHO_COUNT = 10;
+const ECHO_COUNT = 15;
 const VERTEX_COUNT = 5;
 const POLYGON_COUNT = 2;
+const SPEED = 0.8;
 
 function init() {
     // Create scene
@@ -58,21 +57,24 @@ function init() {
     const line = new THREE.LineSegments(boxEdges, lineMaterial);
     scene.add(line);
 
-    const edgeMaterial = new THREE.LineBasicMaterial({ color: '#00ffff' });
+    const getRandomColor = () => {
+        return "#" + Math.floor(Math.random()*16777215).toString(16);
+    };
 
     const createPolygon = () => {
-        const polygon = {
-            vertices: [],
-            echoes: [],
-        };
-        // Create vertices for VERTEX_COUNT
+        const vertices = [];
         for (let i = 0; i < VERTEX_COUNT; i++) {
-            polygon.vertices.push({
+            vertices.push({
                 position: new Vector2(Math.random() * WIDTH - WIDTH / 2, Math.random() * HEIGHT - HEIGHT / 2),
                 velocity: new Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize(),
             });
         }
-        return polygon;
+        const material = new THREE.LineBasicMaterial({ color: getRandomColor() });
+        return {
+            vertices,
+            material,
+            echoes: [],
+        };
     };
 
     // Create polygons
@@ -82,8 +84,8 @@ function init() {
     }
 
     function movePoint(point, velocity) {
-        let newX = point.x + velocity.x;
-        let newY = point.y + velocity.y;
+        let newX = point.x + velocity.x * SPEED;
+        let newY = point.y + velocity.y * SPEED;
 
         if (newX > boundingBox.max.x) {
             newX = boundingBox.max.x;
@@ -129,7 +131,7 @@ function init() {
                     new Vector3(point1.x, point1.y, 0),
                     new Vector3(point2.x, point2.y, 0)
                 ]);
-                const edge = new THREE.Line(geometry, edgeMaterial);
+                const edge = new THREE.Line(geometry, polygon.material);
                 edges.push(edge);
                 scene.add(edge);
             }
