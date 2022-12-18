@@ -3,15 +3,27 @@ import { Vector2, Vector3 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
-// TODO: add gui for speed, number of points per chain, number of chains, how many old chains to show
 // TODO: change color over time
+// TODO: add option to toggle color randomization and option to shift colors over time
 
 const WIDTH = 120;
 const HEIGHT = 80;
+
 const ECHO_COUNT = 15;
 const VERTEX_COUNT = 5;
 const POLYGON_COUNT = 2;
 const SPEED = 0.8;
+
+let polygons = [];
+
+let params = {
+    echoCount: ECHO_COUNT,
+    vertexCount: VERTEX_COUNT,
+    polygonCount: POLYGON_COUNT,
+    speed: SPEED,
+};
+
+let paramsToApply = { ...params };
 
 function init() {
     // Create scene
@@ -42,7 +54,23 @@ function init() {
 
     // Create GUI
     const gui = new GUI();
-    // gui.add({ reset }, 'reset');
+    const resetScene = () => {
+        while (polygons.length) {
+            const polygon = polygons.pop();
+            polygon.echoes.forEach(echo => {
+                echo.forEach(edge => {
+                    scene.remove(edge);
+                });
+            });
+        }
+        params = { ...paramsToApply };
+        polygons = createPolygons();
+    };
+    gui.add(paramsToApply, 'echoCount', 1, 50, 1);
+    gui.add(paramsToApply, 'vertexCount', 3, 50, 1);
+    gui.add(paramsToApply, 'polygonCount', 1, 15, 1);
+    gui.add(paramsToApply, 'speed', 0, 3);
+    gui.add({ 'Apply Params': resetScene }, 'Apply Params');
 
 
     // Create lights
@@ -51,11 +79,11 @@ function init() {
 
     // Bounding box
     const boundingBox = new THREE.Box2(new Vector2(-WIDTH / 2, -HEIGHT / 2), new Vector2(WIDTH / 2, HEIGHT / 2));
-    const boxPlane = new THREE.PlaneGeometry(WIDTH, HEIGHT);
-    const boxEdges = new THREE.EdgesGeometry(boxPlane);
-    const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
-    const line = new THREE.LineSegments(boxEdges, lineMaterial);
-    scene.add(line);
+    // const boxPlane = new THREE.PlaneGeometry(WIDTH, HEIGHT);
+    // const boxEdges = new THREE.EdgesGeometry(boxPlane);
+    // const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
+    // const line = new THREE.LineSegments(boxEdges, lineMaterial);
+    // scene.add(line);
 
     const getRandomColor = () => {
         return "#" + Math.floor(Math.random()*16777215).toString(16);
@@ -63,7 +91,7 @@ function init() {
 
     const createPolygon = () => {
         const vertices = [];
-        for (let i = 0; i < VERTEX_COUNT; i++) {
+        for (let i = 0; i < params.vertexCount; i++) {
             vertices.push({
                 position: new Vector2(Math.random() * WIDTH - WIDTH / 2, Math.random() * HEIGHT - HEIGHT / 2),
                 velocity: new Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize(),
@@ -77,15 +105,18 @@ function init() {
         };
     };
 
-    // Create polygons
-    const polygons = [];
-    for (let i = 0; i < POLYGON_COUNT; i++) {
-        polygons.push(createPolygon());
+    const createPolygons = () => {
+        const polygons = [];
+        for (let i = 0; i < params.polygonCount; i++) {
+            polygons.push(createPolygon());
+        }
+        return polygons;
     }
+    polygons = createPolygons();
 
     function movePoint(point, velocity) {
-        let newX = point.x + velocity.x * SPEED;
-        let newY = point.y + velocity.y * SPEED;
+        let newX = point.x + velocity.x * params.speed;
+        let newY = point.y + velocity.y * params.speed;
 
         if (newX > boundingBox.max.x) {
             newX = boundingBox.max.x;
@@ -136,9 +167,9 @@ function init() {
                 scene.add(edge);
             }
 
-             // Delete old edges
+            // Delete old edges
             polygon.echoes.push(edges);
-            if (polygon.echoes.length > ECHO_COUNT) {
+            if (polygon.echoes.length > params.echoCount) {
                 const edgesToRemove = polygon.echoes.shift();
                 edgesToRemove.forEach(edge => {
                     scene.remove(edge);
