@@ -65,10 +65,10 @@ function init() {
     gui.add(PARAMS, 'buildSpeed', 0, 20);
 
     // Create lights
-    const ambientLight = new THREE.AmbientLight(0x404040);
+    const ambientLight = new THREE.AmbientLight(0x707070);
     scene.add(ambientLight);
 
-    const directionalLight = new THREE.DirectionalLight(0xffffff, 0.5);
+    const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
     directionalLight.position.x = 1;
     directionalLight.position.z = 1;
     scene.add(directionalLight);
