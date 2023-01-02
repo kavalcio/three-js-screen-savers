@@ -34,3 +34,9 @@
 // var app = http.createServer(createServer);
 
 // app.listen(3010);
+
+// TODO: clean this file up
+// TODO: fix auto color generation, it sometimes generates invalid colors
+// TODO: move files around, organize
+// TODO: add stuff to index html file
+// TODO: add readme

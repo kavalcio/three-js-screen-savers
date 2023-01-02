@@ -18,14 +18,14 @@ module.exports = {
     new HtmlWebpackPlugin({
       hash: true,
       title: 'Pipes',
-      template: './index.html',
+      template: './template.html',
       chunks: ['pipes'],
       filename: './pipes.html',
     }),
     new HtmlWebpackPlugin({
       hash: true,
       title: 'Mystify',
-      template: './index.html',
+      template: './template.html',
       chunks: ['mystify'],
       filename: './mystify.html',
     }),
