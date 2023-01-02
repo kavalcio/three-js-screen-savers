@@ -3,9 +3,10 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
-    index: './index.js',
+    // index: './index.js',
     pipes: './pipes.js',
     mystify: './mystify.js',
+    bezier: './bezier.js',
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -28,6 +29,13 @@ module.exports = {
       template: './template.html',
       chunks: ['mystify'],
       filename: './mystify.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Bezier',
+      template: './template.html',
+      chunks: ['bezier'],
+      filename: './bezier.html',
     }),
   ],
   output: {
