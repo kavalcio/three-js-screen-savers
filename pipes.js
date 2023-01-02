@@ -178,4 +178,4 @@ function init() {
     animate();
 }
 
-export default init;
+init();
