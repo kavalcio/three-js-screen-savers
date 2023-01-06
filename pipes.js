@@ -7,6 +7,7 @@ const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
 const PIPE_BUILD_SPEED = 3;
 const PIPE_RADIUS = 1;
+const PIPE_COUNT = 3;
 const DIRECTIONS = [
   new Vector3(0, 0, 1),
   new Vector3(0, 0, -1),
@@ -20,13 +21,17 @@ const BOUNDS = {
   max: { x: 130, y: 70, z: 60},
 };
 
-const PARAMS = {
+let params = {
   maxPipeLength: PIPE_LENGTH_MAX,
   minPipeLength: PIPE_LENGTH_MIN,
   buildSpeed: PIPE_BUILD_SPEED,
-}
+  pipeRadius: PIPE_RADIUS,
+  pipeCount: PIPE_COUNT,
+};
 
-const pipeList = [];
+let paramsToApply = { ...params };
+
+let pipeList = [];
 
 // TODO: prevent pipe from overlapping itself
 // TODO: add Apply button that applies gui params and deletes all pipes (dont delete other stuff in the scene, or just recreate them after deleting)
@@ -58,11 +63,32 @@ function init() {
   const controls = new OrbitControls(camera, renderer.domElement);
   document.body.appendChild(renderer.domElement);
 
+  const deletePipe = (pipe) => {
+    if (pipe.previous) {
+      deletePipe(pipe.previous);
+    }
+    if (pipe.sphere) {
+      scene.remove(pipe.sphere);
+    }
+    scene.remove(pipe.mesh);
+  };
+
   // Create GUI
   const gui = new GUI();
-  gui.add(PARAMS, 'maxPipeLength', 8, 100);
-  gui.add(PARAMS, 'minPipeLength', 1, 7);
-  gui.add(PARAMS, 'buildSpeed', 0, 20);
+  const resetScene = () => {
+    pipeList.forEach((pipe) => {
+      deletePipe(pipe);
+    });
+    pipeList = [];
+    params = { ...paramsToApply };
+    createPipes();
+  };
+  gui.add(paramsToApply, 'maxPipeLength', 8, 100);
+  gui.add(paramsToApply, 'minPipeLength', 1, 7);
+  gui.add(paramsToApply, 'buildSpeed', 0, 20);
+  gui.add(paramsToApply, 'pipeCount', 1, 15, 1);
+  gui.add(paramsToApply, 'pipeRadius', 0.5, 2);
+  gui.add({ 'Apply Params': resetScene }, 'Apply Params');
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x707070);
@@ -91,7 +117,7 @@ function init() {
     if (parentMesh) {
       mesh = parentMesh.clone();
     } else {
-      const geometry = new THREE.CylinderGeometry(PARAMS.pipeRadius, PARAMS.pipeRadius, 1, 32);
+      const geometry = new THREE.CylinderGeometry(params.pipeRadius, params.pipeRadius, 1, 32);
       const material = new THREE.MeshPhongMaterial({ color: getRandomColor() });
       mesh = new THREE.Mesh(geometry, material);
     }
@@ -107,13 +133,14 @@ function init() {
     mesh.quaternion.setFromUnitVectors(axis, direction.clone().normalize());
 
     // Add to scene
-    pipeList.push({ mesh, start, end, currentScale: 0 });
     scene.add(mesh);
+    const newPipe = { mesh, start, end, currentScale: 0, previous: null };
+    return newPipe;
   }
 
   function getRandomEndpoint({ directions, oldEnd }) {
     const randomDirection = directions[getRandomInt(0, directions.length - 1)];
-    const randomLength = getRandomInt(PARAMS.minPipeLength, PARAMS.maxPipeLength);
+    const randomLength = getRandomInt(params.minPipeLength, params.maxPipeLength);
     const newEnd = oldEnd.clone().addScaledVector(randomDirection, randomLength);
 
     if (
@@ -131,9 +158,14 @@ function init() {
   }
 
   // Initialize several pipes
-  createPipe({ start: new Vector3(20, 0, 0), end: new Vector3(30, 0, 0) });
-  createPipe({ start: new Vector3(-20, 10, 0), end: new Vector3(-20, 20, 0) });
-  createPipe({ start: new Vector3(0, -10, -40), end: new Vector3(0, -10, -50) });
+  const createPipes = () => {
+    for (let i = 0; i < params.pipeCount; i++) {
+      const start = new Vector3(getRandomInt(-30, 30), getRandomInt(-30, 30), getRandomInt(-30, 30));
+      const end = getRandomEndpoint({ directions: DIRECTIONS, oldEnd: start });
+        pipeList.push(createPipe({ start, end }));
+    }
+  }
+  createPipes();
 
   function animate() {
     requestAnimationFrame(animate);
@@ -142,23 +174,20 @@ function init() {
       const direction = pipe.end.clone().sub(pipe.start);
       if (direction.length() > pipe.currentScale) {
         // Translate
-        pipe.mesh.position.addScaledVector(direction.clone().normalize(), PARAMS.buildSpeed / 2);
+        pipe.mesh.position.addScaledVector(direction.clone().normalize(), params.buildSpeed / 2);
         if (pipe.mesh.position.clone().sub(pipe.start).length() > direction.length() / 2) {
           pipe.mesh.position.copy(pipe.start).addScaledVector(direction, 0.5);
         }
 
         // Scale
-        pipe.currentScale += PARAMS.buildSpeed;
+        pipe.currentScale += params.buildSpeed;
         if (pipe.currentScale > direction.length()) {
           pipe.currentScale = direction.length();
         }
         pipe.mesh.scale.y = pipe.currentScale;
       } else {
-        // Pipe is done, remove from list
-        pipeList.splice(index, 1);
-
         // Create sphere at corner
-        const geometry = new THREE.SphereGeometry(PARAMS.pipeRadius, 32, 32);
+        const geometry = new THREE.SphereGeometry(params.pipeRadius, 32, 32);
         const material = new THREE.MeshPhongMaterial({ color: pipe.mesh.material.color.getHex() });
         const sphere = new THREE.Mesh(geometry, material);
         sphere.position.copy(pipe.end);
@@ -168,7 +197,9 @@ function init() {
         const reverseDirection = direction.clone().normalize().multiplyScalar(-1);
         const validDirections = DIRECTIONS.filter(direction => !direction.equals(reverseDirection));
         const newEnd = getRandomEndpoint({ directions: validDirections, oldEnd: pipe.end });
-        createPipe({ parentMesh: pipe.mesh, start: pipe.end, end: newEnd });
+        const newPipe = createPipe({ parentMesh: pipe.mesh, start: pipe.end, end: newEnd });
+        newPipe.previous = { mesh: pipe.mesh, sphere ,previous: pipe.previous };
+        pipeList[index] = newPipe;
       }
     });
 
