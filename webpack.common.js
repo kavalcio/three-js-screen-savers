@@ -9,6 +9,18 @@ module.exports = {
     bezier: './bezier.js',
     refraction: './refraction.js',
   },
+  module: {
+    rules: [
+      {
+        test: /\.png/,
+        type: 'asset/resource',
+      },
+      {
+        test: /\.jpg/,
+        type: 'asset/resource',
+      },
+    ],
+  },
   plugins: [
     new HtmlWebpackPlugin({
       hash: true,
