@@ -70,7 +70,7 @@ function init() {
   scene.add(sphereMesh);
 
   // Create background
-  const bgTexture = new THREE.TextureLoader().load('assets/xp_background.jpg');
+  const bgTexture = new THREE.TextureLoader().load('asset/xp_background.jpg');
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
   const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
   const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
