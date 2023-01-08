@@ -7,6 +7,7 @@ module.exports = {
     pipes: './pipes.js',
     mystify: './mystify.js',
     bezier: './bezier.js',
+    refraction: './refraction.js',
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -36,6 +37,13 @@ module.exports = {
       template: './template.html',
       chunks: ['bezier'],
       filename: './bezier.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Refraction',
+      template: './template.html',
+      chunks: ['refraction'],
+      filename: './refraction.html',
     }),
   ],
   output: {
