@@ -3,6 +3,11 @@ import { Vector2 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
+const INNER_WIDTH = 120;
+const INNER_HEIGHT = 80;
+const OUTER_WIDTH = 200;
+const OUTER_HEIGHT = 140;
+
 const CURVE_COUNT = 3;
 
 let params = {
@@ -21,7 +26,8 @@ function init() {
 
   // Create camera
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 110;
+  // camera.position.z = 110;
+  camera.position.z = 180;
   const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
   const initialWindowHeight = window.innerHeight;
 
@@ -37,7 +43,7 @@ function init() {
   window.addEventListener('resize', onWindowResize, false);
 
   // Create renderer
-  const renderer = new THREE.WebGLRenderer();
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   const controls = new OrbitControls(camera, renderer.domElement);
   document.body.appendChild(renderer.domElement);
@@ -50,45 +56,41 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0x404040);
   scene.add(ambientLight);
 
-  // Bounding box
-  const WIDTH = 120;
-  const HEIGHT = 80;
-  const boundingBox = new THREE.Box2(new Vector2(-WIDTH / 2, -HEIGHT / 2), new Vector2(WIDTH / 2, HEIGHT / 2));
-  const boxPlane = new THREE.PlaneGeometry(WIDTH, HEIGHT);
+  // Inner bounding box, for vertex control points
+  const innerBounds = new THREE.Box2(new Vector2(-INNER_WIDTH / 2, -INNER_HEIGHT / 2), new Vector2(INNER_WIDTH / 2, INNER_HEIGHT / 2));
+  const boxPlane = new THREE.PlaneGeometry(INNER_WIDTH, INNER_HEIGHT);
   const boxEdges = new THREE.EdgesGeometry(boxPlane);
   const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
   const line = new THREE.LineSegments(boxEdges, lineMaterial);
   scene.add(line);
 
-  // Bounding box for control points
-  const WIDTH2 = 200;
-  const HEIGHT2 = 140;
-  const boundingBox2 = new THREE.Box2(new Vector2(-WIDTH2 / 2, -HEIGHT2 / 2), new Vector2(WIDTH2 / 2, HEIGHT2 / 2));
-  const boxPlane2 = new THREE.PlaneGeometry(WIDTH2, HEIGHT2);
+  // Outer bounding box, for intermediate control points
+  const outerBounds = new THREE.Box2(new Vector2(-OUTER_WIDTH / 2, -OUTER_HEIGHT / 2), new Vector2(OUTER_WIDTH / 2, OUTER_HEIGHT / 2));
+  const boxPlane2 = new THREE.PlaneGeometry(OUTER_WIDTH, OUTER_HEIGHT);
   const boxEdges2 = new THREE.EdgesGeometry(boxPlane2);
   const lineMaterial2 = new THREE.LineBasicMaterial({ color: '#ffff00' });
   const line2 = new THREE.LineSegments(boxEdges2, lineMaterial2);
   scene.add(line2);
 
-  const sphereGeo = new THREE.SphereGeometry(0.5, 5, 5);
+  const sphereGeo = new THREE.SphereGeometry(1.5, 5, 5);
   
   function movePoint(point, velocity, sphere) {
     let newX = point.x + velocity.x;
     let newY = point.y + velocity.y;
 
-    if (newX > boundingBox.max.x) {
-      newX = boundingBox.max.x;
+    if (newX > innerBounds.max.x) {
+      newX = innerBounds.max.x;
       velocity.x *= -1;
-    } else if (newX < boundingBox.min.x) {
-      newX = boundingBox.min.x;
+    } else if (newX < innerBounds.min.x) {
+      newX = innerBounds.min.x;
       velocity.x *= -1;
     }
 
-    if (newY > boundingBox.max.y) {
-      newY = boundingBox.max.y;
+    if (newY > innerBounds.max.y) {
+      newY = innerBounds.max.y;
       velocity.y *= -1;
-    } else if (newY < boundingBox.min.y) {
-      newY = boundingBox.min.y;
+    } else if (newY < innerBounds.min.y) {
+      newY = innerBounds.min.y;
       velocity.y *= -1;
     }
 
@@ -116,10 +118,10 @@ function init() {
       if (i === 0) {
         // First curve
         controlPoints = [
-          getRandomPoint(WIDTH, HEIGHT),
-          getRandomPoint(WIDTH, HEIGHT),
-          getRandomPoint(WIDTH, HEIGHT),
-          getRandomPoint(WIDTH, HEIGHT),
+          getRandomPoint(INNER_WIDTH, INNER_HEIGHT),
+          getRandomPoint(OUTER_WIDTH, OUTER_HEIGHT),
+          getRandomPoint(OUTER_WIDTH, OUTER_HEIGHT),
+          getRandomPoint(INNER_WIDTH, INNER_HEIGHT),
         ];
       } else if (i === (params.curveCount) - 1) {
         // Last curve
@@ -137,8 +139,8 @@ function init() {
         controlPoints = [
           previousCurve[3],
           new Vector2(2 * previousCurve[3].x - previousCurve[2].x, 2 * previousCurve[3].y - previousCurve[2].y),
-          getRandomPoint(WIDTH, HEIGHT),
-          getRandomPoint(WIDTH, HEIGHT),
+          getRandomPoint(OUTER_WIDTH, OUTER_HEIGHT),
+          getRandomPoint(INNER_WIDTH, INNER_HEIGHT),
         ];
       }
       const color = getRandomColor();

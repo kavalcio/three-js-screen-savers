@@ -13,6 +13,7 @@ const ECHO_COUNT = 15;
 const VERTEX_COUNT = 5;
 const POLYGON_COUNT = 2;
 const SPEED = 0.8;
+const UNIFORM_COLOR = false;
 
 let polygons = [];
 
@@ -21,6 +22,7 @@ let params = {
   vertexCount: VERTEX_COUNT,
   polygonCount: POLYGON_COUNT,
   speed: SPEED,
+  uniformColor: UNIFORM_COLOR,
 };
 
 let paramsToApply = { ...params };
@@ -64,12 +66,14 @@ function init() {
       });
     }
     params = { ...paramsToApply };
+    uniformMaterial = new THREE.LineBasicMaterial({ color: getRandomColor() });
     polygons = createPolygons();
   };
   gui.add(paramsToApply, 'echoCount', 1, 50, 1);
   gui.add(paramsToApply, 'vertexCount', 3, 50, 1);
   gui.add(paramsToApply, 'polygonCount', 1, 15, 1);
   gui.add(paramsToApply, 'speed', 0, 3);
+  gui.add(paramsToApply, 'uniformColor');
   gui.add({ 'Apply Params': resetScene }, 'Apply Params');
 
 
@@ -89,6 +93,8 @@ function init() {
     return "#" + Math.floor(Math.random()*16777215).toString(16);
   };
 
+  let uniformMaterial = new THREE.LineBasicMaterial({ color: getRandomColor() });
+
   const createPolygon = () => {
     const vertices = [];
     for (let i = 0; i < params.vertexCount; i++) {
@@ -97,7 +103,7 @@ function init() {
         velocity: new Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize(),
       });
     }
-    const material = new THREE.LineBasicMaterial({ color: getRandomColor() });
+    const material = params.uniformColor ? uniformMaterial : new THREE.LineBasicMaterial({ color: getRandomColor() });
     return {
       vertices,
       material,
