@@ -111,6 +111,66 @@ function init() {
     return "#" + Math.floor(Math.random()*16777215).toString(16);
   };
 
+  const drawRedSphere = (point) => {
+    const sphereMat = new THREE.MeshBasicMaterial({ color: '#ff0000' });
+    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+    sphere.position.x = point.x;
+    sphere.position.y = point.y;
+    scene.add(sphere);
+  }
+
+  const clipSegmentWithinBounds = (p1, p2) => {
+    if (!(
+      p2.x > outerBounds.max.x ||
+      p2.x < outerBounds.min.x ||
+      p2.y > outerBounds.max.y ||
+      p2.y < outerBounds.min.y
+    )) {
+      return p2;
+    }
+
+    const segment = new Vector2(p2.x - p1.x, p2.y - p1.y);
+    const d = segment.clone().normalize();
+    if (p2.x > outerBounds.max.x) {
+      const i_length = Math.abs((outerBounds.max.x - p1.x) / d.x);
+      const i_point = d.clone().multiplyScalar(i_length).add(p1);
+      if (i_point.y > outerBounds.min.y && i_point.y < outerBounds.max.y) {
+        // console.log('--intersects with right side', p2);
+        // drawRedSphere(i_point);
+        return i_point;
+      }
+    }
+    if (p2.x < outerBounds.min.x) {
+      const i_length = Math.abs((outerBounds.min.x - p1.x) / d.x);
+      const i_point = d.clone().multiplyScalar(i_length).add(p1);
+      if (i_point.y > outerBounds.min.y && i_point.y < outerBounds.max.y) {
+        // console.log('--intersects with left side', p2);
+        // drawRedSphere(i_point);
+        return i_point;
+      }
+    }
+    if (p2.y > outerBounds.max.y) {
+      const i_length = Math.abs((outerBounds.max.y - p1.y) / d.y);
+      const i_point = d.clone().multiplyScalar(i_length).add(p1);
+      if (i_point.x > outerBounds.min.x && i_point.x < outerBounds.max.x) {
+        // console.log('--intersects with top side', p2);
+        // drawRedSphere(i_point);
+        return i_point;
+      }
+    }
+    if (p2.y < outerBounds.min.y) {
+      const i_length = Math.abs((outerBounds.min.y - p1.y) / d.y);
+      const i_point = d.clone().multiplyScalar(i_length).add(p1);
+      if (i_point.x > outerBounds.min.x && i_point.x < outerBounds.max.x) {
+        // console.log('--intersects with bottom side', p2);
+        // drawRedSphere(i_point);
+        return i_point;
+      }
+    }
+
+    return p2;
+  }
+
   const bezierCurves = [];
   function createActualRandomBezierCurve() {
     for (let i = 0; i < params.curveCount; i += 1) {
@@ -133,6 +193,11 @@ function init() {
           new Vector2(2 * firstCurve[0].x - firstCurve[1].x, 2 * firstCurve[0].y - firstCurve[1].y),
           firstCurve[0],
         ];
+
+        controlPoints[1] = clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
+        controlPoints[2] = clipSegmentWithinBounds(controlPoints[3], controlPoints[2]);
+        // clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
+        // clipSegmentWithinBounds(controlPoints[3], controlPoints[2]);
       } else {
         // Middle curves
         const previousCurve = bezierCurves[i - 1];
@@ -142,14 +207,25 @@ function init() {
           getRandomPoint(OUTER_WIDTH, OUTER_HEIGHT),
           getRandomPoint(INNER_WIDTH, INNER_HEIGHT),
         ];
+        controlPoints[1] = clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
+        // clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
       }
       const color = getRandomColor();
       const sphereMat = new THREE.MeshBasicMaterial({ color });
-      controlPoints.forEach(point => {
+      controlPoints.forEach((point, index) => {
         const sphere = new THREE.Mesh(sphereGeo, sphereMat);
         sphere.position.x = point.x;
         sphere.position.y = point.y;
         scene.add(sphere);
+
+        if (index === 1 || index === 2) {
+          const points = [point];
+          points.push(index === 1 ? controlPoints[0] : controlPoints[3]);
+          const edge = new THREE.BufferGeometry().setFromPoints(points);
+          const lmat = new THREE.LineBasicMaterial({ color: '#999999' });
+          const line = new THREE.LineSegments(edge, lmat);
+          scene.add(line);
+        }
       });
       const curve = new THREE.CubicBezierCurve(...controlPoints);
       const points = curve.getPoints(50);
