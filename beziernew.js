@@ -8,37 +8,29 @@ const INNER_HEIGHT = 80;
 const OUTER_WIDTH = 200;
 const OUTER_HEIGHT = 140;
 
-const CURVE_COUNT = 3;
-const ECHO_COUNT = 10;
+const CURVE_COUNT = 5;
+const ECHO_COUNT = 15;
 const SPEED = 30;
-const SHOW_CONTROL_POINTS = true;
+const SHOW_CONTROL_POINTS = false;
 
-let curveSegments = [];
-// {
-//   controlPoints,
-//   pointVelocities,
-//   material,
-//   echoes: [],
-// };
+let bezierCurves = [];
 
 let params = {
   echoCount: ECHO_COUNT,
   curveCount: CURVE_COUNT,
   speed: SPEED,
-  showControlPoints: SHOW_CONTROL_POINTS,
+  showGuides: SHOW_CONTROL_POINTS,
 };
 let paramsToApply = { ...params };
 
-// TODO: unify colors, make them cycle over time
-// TODO: rename curveSegments param
-// TODO: add reset function
+// TODO: make color cycle over time
 function init() {
   // Create scene
   const scene = new THREE.Scene();
 
   // Create camera
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 120;
+  camera.position.z = 110;
   const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
   const initialWindowHeight = window.innerHeight;
 
@@ -61,10 +53,25 @@ function init() {
 
   // Create GUI
   const gui = new GUI();
+  const resetScene = () => {
+    while (bezierCurves.length) {
+      const curve = bezierCurves.pop();
+      curve.echoes.forEach(echo => scene.remove(echo));
+      curve.pointSpheres.forEach(sphere => scene.remove(sphere));
+    }
+    params = { ...paramsToApply };
+    curveColor = new THREE.Color(getRandomColor());
+
+    innerBoundsLine.visible = !!params.showGuides;
+    outerBoundsLine.visible = !!params.showGuides;
+
+    createRandomBezierCurves();
+  };
   gui.add(paramsToApply, 'curveCount', 2, 16, 1);
   gui.add(paramsToApply, 'echoCount', 1, 50, 1);
   gui.add(paramsToApply, 'speed', 0, 100, 1);
-  gui.add(paramsToApply, 'showControlPoints');
+  gui.add(paramsToApply, 'showGuides');
+  gui.add({ 'Apply Params': resetScene }, 'Apply Params');
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -75,23 +82,21 @@ function init() {
 
   // Inner bounding box, for vertex control points
   const innerBounds = new THREE.Box2(new Vector2(-INNER_WIDTH / 2, -INNER_HEIGHT / 2), new Vector2(INNER_WIDTH / 2, INNER_HEIGHT / 2));
-  if (params.showControlPoints) {
-    const boxPlane = new THREE.PlaneGeometry(INNER_WIDTH, INNER_HEIGHT);
-    const boxEdges = new THREE.EdgesGeometry(boxPlane);
-    const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
-    const line = new THREE.LineSegments(boxEdges, lineMaterial);
-    scene.add(line);
-  }
+  const boxPlane = new THREE.PlaneGeometry(INNER_WIDTH, INNER_HEIGHT);
+  const boxEdges = new THREE.EdgesGeometry(boxPlane);
+  const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
+  const innerBoundsLine = new THREE.LineSegments(boxEdges, lineMaterial);
+  innerBoundsLine.visible = !!params.showGuides;
+  scene.add(innerBoundsLine);
 
   // Outer bounding box, for intermediate control points
   const outerBounds = new THREE.Box2(new Vector2(-OUTER_WIDTH / 2, -OUTER_HEIGHT / 2), new Vector2(OUTER_WIDTH / 2, OUTER_HEIGHT / 2));
-  if (params.showControlPoints) {
-    const boxPlane2 = new THREE.PlaneGeometry(OUTER_WIDTH, OUTER_HEIGHT);
-    const boxEdges2 = new THREE.EdgesGeometry(boxPlane2);
-    const lineMaterial2 = new THREE.LineBasicMaterial({ color: '#ffff00' });
-    const line2 = new THREE.LineSegments(boxEdges2, lineMaterial2);
-    scene.add(line2);
-  }
+  const boxPlane2 = new THREE.PlaneGeometry(OUTER_WIDTH, OUTER_HEIGHT);
+  const boxEdges2 = new THREE.EdgesGeometry(boxPlane2);
+  const lineMaterial2 = new THREE.LineBasicMaterial({ color: '#ffff00' });
+  const outerBoundsLine = new THREE.LineSegments(boxEdges2, lineMaterial2);
+  outerBoundsLine.visible = !!params.showGuides;
+  scene.add(outerBoundsLine);
 
   const sphereGeo = new THREE.SphereGeometry(1.5, 5, 5);
   
@@ -142,6 +147,8 @@ function init() {
   const getRandomColor = () => {
     return "#" + Math.floor(Math.random()*16777215).toString(16);
   };
+
+  let curveColor = new THREE.Color(getRandomColor());
 
   const drawRedSphere = (point) => {
     const sphereMat = new THREE.MeshBasicMaterial({ color: '#ff0000' });
@@ -217,8 +224,8 @@ function init() {
         ];
       } else if (i === (params.curveCount) - 1) {
         // Last curve
-        const firstCurve = curveSegments[0].controlPoints;
-        const previousCurve = curveSegments[i - 1].controlPoints;
+        const firstCurve = bezierCurves[0].controlPoints;
+        const previousCurve = bezierCurves[i - 1].controlPoints;
         controlPoints = [
           previousCurve[3],
           new Vector2(2 * previousCurve[3].x - previousCurve[2].x, 2 * previousCurve[3].y - previousCurve[2].y),
@@ -232,7 +239,7 @@ function init() {
         // clipSegmentWithinBounds(controlPoints[3], controlPoints[2]);
       } else {
         // Middle curves
-        const previousCurve = curveSegments[i - 1].controlPoints;
+        const previousCurve = bezierCurves[i - 1].controlPoints;
         controlPoints = [
           previousCurve[3],
           new Vector2(2 * previousCurve[3].x - previousCurve[2].x, 2 * previousCurve[3].y - previousCurve[2].y),
@@ -245,11 +252,11 @@ function init() {
 
       const pointSpheres = [];
       const pointControlLines = [];
-      const color = getRandomColor();
-      const sphereMat = new THREE.MeshBasicMaterial({ color });
+      const color = curveColor;
+      const sphereMat = new THREE.MeshBasicMaterial({ color: curveColor });
       controlPoints.forEach((point, index) => {
 
-        if (params.showControlPoints) {
+        if (params.showGuides) {
           // Draw control points
           const sphere = new THREE.Mesh(sphereGeo, sphereMat);
           sphere.position.x = point.x;
@@ -286,7 +293,7 @@ function init() {
         // material,
         echoes: [],
       };
-      curveSegments.push(newCurveSegment);
+      bezierCurves.push(newCurveSegment);
     }
   }
   createRandomBezierCurves();
@@ -296,59 +303,63 @@ function init() {
 
     const deltaT = clock.getDelta();
 
-    curveSegments.forEach((curveSegment, curveIndex) => {
+    // curveColor.setRGB(curveColor.r > 255 ? 0 : curveColor.r + 1, curveColor.g, curveColor.b);
+
+    // console.log(curveColor);
+
+    bezierCurves.forEach((curve, curveIndex) => {
       // Move control points
-      curveSegment.controlPoints.forEach((point, pointIndex) => {
+      curve.controlPoints.forEach((point, pointIndex) => {
         let newPosition;
         if (curveIndex === 0) {
-          newPosition = point.clone().add(curveSegment.pointVelocities[pointIndex].clone().multiplyScalar(deltaT));
-        } else if (curveIndex === curveSegments.length - 1) {
-          const firstCurve = curveSegments[0].controlPoints;
-          const previousCurve = curveSegments[curveIndex - 1].controlPoints;
+          newPosition = point.clone().add(curve.pointVelocities[pointIndex].clone().multiplyScalar(deltaT));
+        } else if (curveIndex === bezierCurves.length - 1) {
+          const firstCurve = bezierCurves[0].controlPoints;
+          const previousCurve = bezierCurves[curveIndex - 1].controlPoints;
           if (pointIndex === 0) {
             newPosition = previousCurve[3].clone();
           } else if (pointIndex === 1) {
             newPosition = new Vector2(2 * previousCurve[3].x - previousCurve[2].x, 2 * previousCurve[3].y - previousCurve[2].y);
-            newPosition = clipSegmentWithinBounds(curveSegment.controlPoints[0], newPosition);
+            newPosition = clipSegmentWithinBounds(curve.controlPoints[0], newPosition);
           } else if (pointIndex === 2) {
             newPosition = new Vector2(2 * firstCurve[0].x - firstCurve[1].x, 2 * firstCurve[0].y - firstCurve[1].y);
-            newPosition = clipSegmentWithinBounds(curveSegment.controlPoints[3], newPosition);
+            newPosition = clipSegmentWithinBounds(curve.controlPoints[3], newPosition);
           } else {
             newPosition = firstCurve[0].clone();
           }
         } else {
-          const previousCurve = curveSegments[curveIndex - 1].controlPoints;
+          const previousCurve = bezierCurves[curveIndex - 1].controlPoints;
           if (pointIndex === 0) {
             newPosition = previousCurve[3].clone();
           } else if (pointIndex === 1) {
             newPosition = new Vector2(2 * previousCurve[3].x - previousCurve[2].x, 2 * previousCurve[3].y - previousCurve[2].y),
-            newPosition = clipSegmentWithinBounds(curveSegment.controlPoints[0], newPosition);
+            newPosition = clipSegmentWithinBounds(curve.controlPoints[0], newPosition);
           } else if (pointIndex === 2) {
-            newPosition = point.clone().add(curveSegment.pointVelocities[pointIndex].clone().multiplyScalar(deltaT));
+            newPosition = point.clone().add(curve.pointVelocities[pointIndex].clone().multiplyScalar(deltaT));
           } else {
-            newPosition = point.clone().add(curveSegment.pointVelocities[pointIndex].clone().multiplyScalar(deltaT));
+            newPosition = point.clone().add(curve.pointVelocities[pointIndex].clone().multiplyScalar(deltaT));
           }
         }
         movePoint({
           position: point,
           newPosition,
           bounds: (pointIndex === 0 || pointIndex === 3) ? innerBounds : outerBounds,
-          velocity: curveSegment.pointVelocities[pointIndex],
-          sphere: curveSegment.pointSpheres[pointIndex],
-          controlLine: curveSegment.pointControlLines[pointIndex],
+          velocity: curve.pointVelocities[pointIndex],
+          sphere: curve.pointSpheres[pointIndex],
+          controlLine: curve.pointControlLines[pointIndex],
         });
       });
       // Draw new echo
-      const curve = new THREE.CubicBezierCurve(...curveSegment.controlPoints);
-      const points = curve.getPoints(50);
-      const curveMaterial = new THREE.LineBasicMaterial({ color: curveSegment.color });
+      const newCurve = new THREE.CubicBezierCurve(...curve.controlPoints);
+      const points = newCurve.getPoints(50);
+      const curveMaterial = new THREE.LineBasicMaterial({ color: curve.color });
       const curveObject = new THREE.Line(new THREE.BufferGeometry().setFromPoints(points), curveMaterial);
       scene.add(curveObject);
-      curveSegment.echoes.push(curveObject);
+      curve.echoes.push(curveObject);
 
       // Delete old echo
-      if (curveSegment.echoes.length > params.echoCount) {
-        const echoToRemove = curveSegment.echoes.shift();
+      if (curve.echoes.length > params.echoCount) {
+        const echoToRemove = curve.echoes.shift();
         scene.remove(echoToRemove);
       }
     });
