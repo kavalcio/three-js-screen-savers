@@ -5,8 +5,8 @@ import { GUI } from 'dat.gui';
 
 const INNER_WIDTH = 120;
 const INNER_HEIGHT = 80;
-// const OUTER_WIDTH = 200;
-// const OUTER_HEIGHT = 140;
+const OUTER_WIDTH = 200;
+const OUTER_HEIGHT = 140;
 
 const CURVE_COUNT = 3;
 const ECHO_COUNT = 10;
@@ -31,7 +31,6 @@ let paramsToApply = { ...params };
 
 // TODO: unify colors, make them cycle over time
 // TODO: rename curveSegments param
-// TODO: should inner control points have smaller bounds than outer control points?
 // TODO: add reset function
 function init() {
   // Create scene
@@ -39,8 +38,7 @@ function init() {
 
   // Create camera
   const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 90;
-  // camera.position.z = 180;
+  camera.position.z = 120;
   const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
   const initialWindowHeight = window.innerHeight;
 
@@ -86,32 +84,34 @@ function init() {
   }
 
   // Outer bounding box, for intermediate control points
-  // const innerBounds = new THREE.Box2(new Vector2(-OUTER_WIDTH / 2, -OUTER_HEIGHT / 2), new Vector2(OUTER_WIDTH / 2, OUTER_HEIGHT / 2));
-  // const boxPlane2 = new THREE.PlaneGeometry(OUTER_WIDTH, OUTER_HEIGHT);
-  // const boxEdges2 = new THREE.EdgesGeometry(boxPlane2);
-  // const lineMaterial2 = new THREE.LineBasicMaterial({ color: '#ffff00' });
-  // const line2 = new THREE.LineSegments(boxEdges2, lineMaterial2);
-  // scene.add(line2);
+  const outerBounds = new THREE.Box2(new Vector2(-OUTER_WIDTH / 2, -OUTER_HEIGHT / 2), new Vector2(OUTER_WIDTH / 2, OUTER_HEIGHT / 2));
+  if (params.showControlPoints) {
+    const boxPlane2 = new THREE.PlaneGeometry(OUTER_WIDTH, OUTER_HEIGHT);
+    const boxEdges2 = new THREE.EdgesGeometry(boxPlane2);
+    const lineMaterial2 = new THREE.LineBasicMaterial({ color: '#ffff00' });
+    const line2 = new THREE.LineSegments(boxEdges2, lineMaterial2);
+    scene.add(line2);
+  }
 
   const sphereGeo = new THREE.SphereGeometry(1.5, 5, 5);
   
-  function movePoint({ position, newPosition, velocity, sphere, controlLine }) {
+  function movePoint({ position, newPosition, bounds, velocity, sphere, controlLine }) {
     let newX = newPosition.x;
     let newY = newPosition.y;
 
-    if (newX > innerBounds.max.x) {
-      newX = innerBounds.max.x;
+    if (newX > bounds.max.x) {
+      newX = bounds.max.x;
       velocity.x *= -1;
-    } else if (newX < innerBounds.min.x) {
-      newX = innerBounds.min.x;
+    } else if (newX < bounds.min.x) {
+      newX = bounds.min.x;
       velocity.x *= -1;
     }
 
-    if (newY > innerBounds.max.y) {
-      newY = innerBounds.max.y;
+    if (newY > bounds.max.y) {
+      newY = bounds.max.y;
       velocity.y *= -1;
-    } else if (newY < innerBounds.min.y) {
-      newY = innerBounds.min.y;
+    } else if (newY < bounds.min.y) {
+      newY = bounds.min.y;
       velocity.y *= -1;
     }
 
@@ -152,48 +152,49 @@ function init() {
   }
 
   const clipSegmentWithinBounds = (p1, p2) => {
+    const bounds = outerBounds;
     if (!(
-      p2.x > innerBounds.max.x ||
-      p2.x < innerBounds.min.x ||
-      p2.y > innerBounds.max.y ||
-      p2.y < innerBounds.min.y
+      p2.x > bounds.max.x ||
+      p2.x < bounds.min.x ||
+      p2.y > bounds.max.y ||
+      p2.y < bounds.min.y
     )) {
       return p2;
     }
 
     const segment = new Vector2(p2.x - p1.x, p2.y - p1.y);
     const d = segment.clone().normalize();
-    if (p2.x > innerBounds.max.x) {
-      const i_length = Math.abs((innerBounds.max.x - p1.x) / d.x);
+    if (p2.x > bounds.max.x) {
+      const i_length = Math.abs((bounds.max.x - p1.x) / d.x);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
-      if (i_point.y > innerBounds.min.y && i_point.y < innerBounds.max.y) {
+      if (i_point.y > bounds.min.y && i_point.y < bounds.max.y) {
         // console.log('--intersects with right side', p2);
         // drawRedSphere(i_point);
         return i_point;
       }
     }
-    if (p2.x < innerBounds.min.x) {
-      const i_length = Math.abs((innerBounds.min.x - p1.x) / d.x);
+    if (p2.x < bounds.min.x) {
+      const i_length = Math.abs((bounds.min.x - p1.x) / d.x);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
-      if (i_point.y > innerBounds.min.y && i_point.y < innerBounds.max.y) {
+      if (i_point.y > bounds.min.y && i_point.y < bounds.max.y) {
         // console.log('--intersects with left side', p2);
         // drawRedSphere(i_point);
         return i_point;
       }
     }
-    if (p2.y > innerBounds.max.y) {
-      const i_length = Math.abs((innerBounds.max.y - p1.y) / d.y);
+    if (p2.y > bounds.max.y) {
+      const i_length = Math.abs((bounds.max.y - p1.y) / d.y);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
-      if (i_point.x > innerBounds.min.x && i_point.x < innerBounds.max.x) {
+      if (i_point.x > bounds.min.x && i_point.x < bounds.max.x) {
         // console.log('--intersects with top side', p2);
         // drawRedSphere(i_point);
         return i_point;
       }
     }
-    if (p2.y < innerBounds.min.y) {
-      const i_length = Math.abs((innerBounds.min.y - p1.y) / d.y);
+    if (p2.y < bounds.min.y) {
+      const i_length = Math.abs((bounds.min.y - p1.y) / d.y);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
-      if (i_point.x > innerBounds.min.x && i_point.x < innerBounds.max.x) {
+      if (i_point.x > bounds.min.x && i_point.x < bounds.max.x) {
         // console.log('--intersects with bottom side', p2);
         // drawRedSphere(i_point);
         return i_point;
@@ -331,6 +332,7 @@ function init() {
         movePoint({
           position: point,
           newPosition,
+          bounds: (pointIndex === 0 || pointIndex === 3) ? innerBounds : outerBounds,
           velocity: curveSegment.pointVelocities[pointIndex],
           sphere: curveSegment.pointSpheres[pointIndex],
           controlLine: curveSegment.pointControlLines[pointIndex],
