@@ -9,8 +9,8 @@ const OUTER_WIDTH = 200;
 const OUTER_HEIGHT = 140;
 
 const CURVE_COUNT = 5;
-const ECHO_COUNT = 15;
-const SPEED = 30;
+const ECHO_COUNT = 20;
+const SPEED = 35;
 const SHOW_CONTROL_POINTS = false;
 
 let bezierCurves = [];
