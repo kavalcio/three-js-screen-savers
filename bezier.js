@@ -175,8 +175,6 @@ function init() {
       const i_length = Math.abs((bounds.max.x - p1.x) / d.x);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
       if (i_point.y > bounds.min.y && i_point.y < bounds.max.y) {
-        // console.log('--intersects with right side', p2);
-        // drawRedSphere(i_point);
         return i_point;
       }
     }
@@ -184,8 +182,6 @@ function init() {
       const i_length = Math.abs((bounds.min.x - p1.x) / d.x);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
       if (i_point.y > bounds.min.y && i_point.y < bounds.max.y) {
-        // console.log('--intersects with left side', p2);
-        // drawRedSphere(i_point);
         return i_point;
       }
     }
@@ -193,8 +189,6 @@ function init() {
       const i_length = Math.abs((bounds.max.y - p1.y) / d.y);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
       if (i_point.x > bounds.min.x && i_point.x < bounds.max.x) {
-        // console.log('--intersects with top side', p2);
-        // drawRedSphere(i_point);
         return i_point;
       }
     }
@@ -202,8 +196,6 @@ function init() {
       const i_length = Math.abs((bounds.min.y - p1.y) / d.y);
       const i_point = d.clone().multiplyScalar(i_length).add(p1);
       if (i_point.x > bounds.min.x && i_point.x < bounds.max.x) {
-        // console.log('--intersects with bottom side', p2);
-        // drawRedSphere(i_point);
         return i_point;
       }
     }
@@ -235,8 +227,6 @@ function init() {
 
         controlPoints[1] = clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
         controlPoints[2] = clipSegmentWithinBounds(controlPoints[3], controlPoints[2]);
-        // clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
-        // clipSegmentWithinBounds(controlPoints[3], controlPoints[2]);
       } else {
         // Middle curves
         const previousCurve = bezierCurves[i - 1].controlPoints;
@@ -247,7 +237,6 @@ function init() {
           getRandomPoint(innerBounds.max.x - innerBounds.min.x, innerBounds.max.y - innerBounds.min.y),
         ];
         controlPoints[1] = clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
-        // clipSegmentWithinBounds(controlPoints[0], controlPoints[1]);
       }
 
       const pointSpheres = [];
@@ -290,7 +279,6 @@ function init() {
         pointSpheres,
         pointControlLines,
         color,
-        // material,
         echoes: [],
       };
       bezierCurves.push(newCurveSegment);
@@ -302,10 +290,6 @@ function init() {
     requestAnimationFrame(animate);
 
     const deltaT = clock.getDelta();
-
-    // curveColor.setRGB(curveColor.r > 255 ? 0 : curveColor.r + 1, curveColor.g, curveColor.b);
-
-    // console.log(curveColor);
 
     bezierCurves.forEach((curve, curveIndex) => {
       // Move control points
@@ -349,6 +333,7 @@ function init() {
           controlLine: curve.pointControlLines[pointIndex],
         });
       });
+
       // Draw new echo
       const newCurve = new THREE.CubicBezierCurve(...curve.controlPoints);
       const points = newCurve.getPoints(50);
