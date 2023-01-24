@@ -8,9 +8,10 @@ const INNER_HEIGHT = 80;
 // const OUTER_WIDTH = 200;
 // const OUTER_HEIGHT = 140;
 
-const CURVE_COUNT = 1;
+const CURVE_COUNT = 3;
 const ECHO_COUNT = 10;
 const SPEED = 30;
+const SHOW_CONTROL_POINTS = true;
 
 let curveSegments = [];
 // {
@@ -24,18 +25,14 @@ let params = {
   echoCount: ECHO_COUNT,
   curveCount: CURVE_COUNT,
   speed: SPEED,
+  showControlPoints: SHOW_CONTROL_POINTS,
 };
 let paramsToApply = { ...params };
 
-// TODO: add speed param
 // TODO: unify colors, make them cycle over time
 // TODO: rename curveSegments param
 // TODO: should inner control points have smaller bounds than outer control points?
-// TODO: add ui param to toggle drawing control points, connection lines and bounds
-// TODO: add random magnitude to velocities
-// TODO: make sure intermediate control points are within bounding box
 // TODO: add reset function
-// TODO: move bezier
 function init() {
   // Create scene
   const scene = new THREE.Scene();
@@ -69,6 +66,7 @@ function init() {
   gui.add(paramsToApply, 'curveCount', 2, 16, 1);
   gui.add(paramsToApply, 'echoCount', 1, 50, 1);
   gui.add(paramsToApply, 'speed', 0, 100, 1);
+  gui.add(paramsToApply, 'showControlPoints');
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -79,11 +77,13 @@ function init() {
 
   // Inner bounding box, for vertex control points
   const innerBounds = new THREE.Box2(new Vector2(-INNER_WIDTH / 2, -INNER_HEIGHT / 2), new Vector2(INNER_WIDTH / 2, INNER_HEIGHT / 2));
-  const boxPlane = new THREE.PlaneGeometry(INNER_WIDTH, INNER_HEIGHT);
-  const boxEdges = new THREE.EdgesGeometry(boxPlane);
-  const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
-  const line = new THREE.LineSegments(boxEdges, lineMaterial);
-  scene.add(line);
+  if (params.showControlPoints) {
+    const boxPlane = new THREE.PlaneGeometry(INNER_WIDTH, INNER_HEIGHT);
+    const boxEdges = new THREE.EdgesGeometry(boxPlane);
+    const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
+    const line = new THREE.LineSegments(boxEdges, lineMaterial);
+    scene.add(line);
+  }
 
   // Outer bounding box, for intermediate control points
   // const innerBounds = new THREE.Box2(new Vector2(-OUTER_WIDTH / 2, -OUTER_HEIGHT / 2), new Vector2(OUTER_WIDTH / 2, OUTER_HEIGHT / 2));
@@ -247,12 +247,15 @@ function init() {
       const color = getRandomColor();
       const sphereMat = new THREE.MeshBasicMaterial({ color });
       controlPoints.forEach((point, index) => {
-        // Draw control points
-        const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-        sphere.position.x = point.x;
-        sphere.position.y = point.y;
-        scene.add(sphere);
-        pointSpheres.push(sphere);
+
+        if (params.showControlPoints) {
+          // Draw control points
+          const sphere = new THREE.Mesh(sphereGeo, sphereMat);
+          sphere.position.x = point.x;
+          sphere.position.y = point.y;
+          scene.add(sphere);
+          pointSpheres.push(sphere);
+        }
 
         // Draw control lines
         // if (index === 1 || index === 2) {
