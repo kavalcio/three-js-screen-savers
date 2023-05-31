@@ -3,6 +3,8 @@ import { Vector2 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
+import { getRandomColor } from './util';
+
 const INNER_WIDTH = 120;
 const INNER_HEIGHT = 80;
 const OUTER_WIDTH = 200;
@@ -142,10 +144,6 @@ function init() {
 
   const getRandomPoint = (maxWidth, maxHeight) => {
     return new Vector2((Math.random() - 0.5) * maxWidth, (Math.random() - 0.5) * maxHeight);
-  };
-
-  const getRandomColor = () => {
-    return "#" + Math.floor(Math.random()*16777215).toString(16);
   };
 
   let curveColor = new THREE.Color(getRandomColor());

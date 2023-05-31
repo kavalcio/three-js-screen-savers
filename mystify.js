@@ -3,6 +3,8 @@ import { Vector2, Vector3 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
+import { getRandomColor } from './util';
+
 // TODO: change color over time
 // TODO: add option to toggle color randomization and option to shift colors over time
 
@@ -88,10 +90,6 @@ function init() {
   // const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
   // const line = new THREE.LineSegments(boxEdges, lineMaterial);
   // scene.add(line);
-
-  const getRandomColor = () => {
-    return "#" + Math.floor(Math.random()*16777215).toString(16);
-  };
 
   let uniformMaterial = new THREE.LineBasicMaterial({ color: getRandomColor() });
 
