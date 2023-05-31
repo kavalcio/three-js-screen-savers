@@ -3,6 +3,8 @@ import { Vector3 } from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { GUI } from 'dat.gui';
 
+import { getRandomColor } from './util';
+
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
 const PIPE_BUILD_SPEED = 3;
@@ -98,10 +100,6 @@ function init() {
   directionalLight.position.x = 1;
   directionalLight.position.z = 1;
   scene.add(directionalLight);
-
-  const getRandomColor = () => {
-    return "#" + Math.floor(Math.random()*16777215).toString(16);
-  };
 
   function getRandomInt(min, max) {
     return Math.floor(Math.random() * (max - min + 1)) + min;
