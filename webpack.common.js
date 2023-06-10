@@ -8,6 +8,7 @@ module.exports = {
     mystify: './mystify.js',
     bezier: './bezier.js',
     refraction: './refraction.js',
+    dither: './dither.js',
   },
   module: {
     rules: [
@@ -19,6 +20,10 @@ module.exports = {
         test: /\.jpg/,
         type: 'asset/resource',
       },
+      {
+        test: /\.glsl$/,
+        use: 'webpack-glsl-loader'
+      }
     ],
   },
   plugins: [
@@ -56,6 +61,13 @@ module.exports = {
       template: './template.html',
       chunks: ['refraction'],
       filename: './refraction.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Dithering',
+      template: './template.html',
+      chunks: ['dither'],
+      filename: './dither.html',
     }),
   ],
   output: {
