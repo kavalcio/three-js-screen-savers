@@ -31,12 +31,9 @@ let params = {
 // https://codegolf.stackexchange.com/questions/259633/make-a-custom-bayer-matrix
 const getNormalizedBayerMatrix = (n) => {
   let g;
-  const matrix = [...Array(1<<n)].map((_,y,a) => a.map(g=(k=n,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
-  const serializedMatrix = new THREE.Matrix4();
-  serializedMatrix.set(...matrix.flat());
-  serializedMatrix.multiplyScalar(1/16);
-  // serializedMatrix.multiplyScalar(1/Math.pow(n, 3));
-  return serializedMatrix;
+  let t = n + 1;
+  const matrix = [...Array(1<<t)].map((_,y,a) => a.map(g=(k=t,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
+  return matrix.flat().map(el => el / Math.pow(2, 2 * n + 2));
 };
 
 function init() {
@@ -113,8 +110,10 @@ function init() {
 
   // TODO: use bayer matrix, function here
   // const bayerMatrix = getNormalizedBayerMatrix(3);
-  const bayerMatrix = getNormalizedBayerMatrix(2);
+  let bayerDimension = 2;
+  const bayerMatrix = getNormalizedBayerMatrix(bayerDimension);
   console.log('bayerMatrix', bayerMatrix)
+  console.log('bayerDimension', bayerDimension)
 
   // Create background
   const imageTexture = new THREE.TextureLoader().load(bgImage);
@@ -125,8 +124,8 @@ function init() {
     uniforms: {
       uTime: { value: 0.0 },
       uMap: { type: 't', value: imageTexture },
-      uThresholdMap: { value: bayerMatrix },
-      // uThresholdMap: new THREE.Uniform(bayerMatrix),
+      uThresholdArray: { value: bayerMatrix },
+      uThresholdMatrixWidth: { value: Math.pow(2, bayerDimension + 1) },
     },
   });
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
