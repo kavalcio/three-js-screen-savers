@@ -14,6 +14,7 @@ import vertexShader from './shaders/vertex.glsl';
 import bayerFragmentShader from './shaders/fragment-bayer.glsl';
 import fixedFragmentShader from './shaders/fragment-fixed.glsl';
 import randomFragmentShader from './shaders/fragment-random.glsl';
+import originalFragmentShader from './shaders/fragment-original.glsl';
 import bgImage from './asset/xp_background.jpg';
 
 /* TODOS:
@@ -107,7 +108,7 @@ function init() {
   const imageTexture = new THREE.TextureLoader().load(bgImage);
   const ditherMaterial = new THREE.ShaderMaterial({
     vertexShader,
-    fragmentShader: bayerFragmentShader,
+    // fragmentShader: bayerFragmentShader,
     transparent: true,
     uniforms: {
       uTime: { value: 0.0 },
@@ -119,21 +120,23 @@ function init() {
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
   const bgMesh = new THREE.Mesh(bgGeometry, ditherMaterial);
   scene.add(bgMesh);
+
   const applyBayerDither = (n) => {
     ditherMaterial.fragmentShader = bayerFragmentShader;
     ditherMaterial.uniforms.uThresholdMatrixWidth.value = Math.pow(2, n + 1);
     ditherMaterial.uniforms.uThresholdArray.value = getNormalizedBayerMatrix(n);
     ditherMaterial.needsUpdate = true;
   };
-  applyBayerDither(1);
-
   const applyFixedDither = (n) => {
     ditherMaterial.fragmentShader = fixedFragmentShader;
     ditherMaterial.needsUpdate = true;
   };
-
   const applyRandomDither = (n) => {
     ditherMaterial.fragmentShader = randomFragmentShader;
+    ditherMaterial.needsUpdate = true;
+  };
+  const applyNoDither = (n) => {
+    ditherMaterial.fragmentShader = originalFragmentShader;
     ditherMaterial.needsUpdate = true;
   };
   
@@ -144,8 +147,12 @@ function init() {
   // cube2.position.z = -20;
   // scene.add(cube3);
 
+  // Initialize page to show Bayer dithering
+  applyBayerDither(1);
+
   // Create GUI
   const gui = new GUI();
+  gui.add({ 'Original': () => applyNoDither() }, 'Original');
   gui.add({ 'Fixed threshold': () => applyFixedDither() }, 'Fixed threshold');
   gui.add({ 'Random threshold': () => applyRandomDither() }, 'Random threshold');
   gui.add({ 'Bayer (0)': () => applyBayerDither(0) }, 'Bayer (0)');
