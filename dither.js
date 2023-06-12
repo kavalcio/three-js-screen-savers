@@ -10,15 +10,11 @@ import * as THREE from 'three';
 import { GUI } from 'dat.gui';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-import vertexShader from './shaders/vertex.glsl'
-import fragmentShader from './shaders/fragment.glsl'
+import vertexShader from './shaders/vertex.glsl';
+import bayerFragmentShader from './shaders/fragment-bayer.glsl';
+import fixedFragmentShader from './shaders/fragment-fixed.glsl';
+import randomFragmentShader from './shaders/fragment-random.glsl';
 import bgImage from './asset/xp_background.jpg';
-
-let params = {
-  scale: 1,
-  center: 1,
-  angle: 0,
-};
 
 /* TODOS:
 - Clean up
@@ -26,9 +22,11 @@ let params = {
 - Add blinn-phong on top of this shader?
 - Add variable dark and bright color options
 - Create a better scene with moving elements
+- Implement non-monochrome dithering
+- Add text on screen to show which dithering algorithm is being used
 */
 
-// https://codegolf.stackexchange.com/questions/259633/make-a-custom-bayer-matrix
+// Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638
 const getNormalizedBayerMatrix = (n) => {
   let g;
   let t = n + 1;
@@ -74,7 +72,6 @@ function init() {
 
   // Create objects
   const geometry = new THREE.IcosahedronGeometry(10);
-  // const material = new THREE.MeshPhongMaterial({ color: 0xaa4400 });
 
   // Create clock
   const clock = new THREE.Clock();
@@ -89,14 +86,12 @@ function init() {
 
   const material = new THREE.RawShaderMaterial({
     vertexShader,
-    fragmentShader,
+    fragmentShader: bayerFragmentShader,
     transparent: true,
     uniforms: {
       uTime: { value: 0.0 },
     },
   });
-  console.log('vertexShader', vertexShader)
-  console.log('fragmentShader', fragmentShader)
   const cube = new THREE.Mesh(geometry, material);
   // scene.add(cube);
 
@@ -108,30 +103,40 @@ function init() {
   cube2.position.z = -20;
   // scene.add(cube2);
 
-  // TODO: use bayer matrix, function here
-  // const bayerMatrix = getNormalizedBayerMatrix(3);
-  let bayerDimension = 2;
-  const bayerMatrix = getNormalizedBayerMatrix(bayerDimension);
-  console.log('bayerMatrix', bayerMatrix)
-  console.log('bayerDimension', bayerDimension)
-
   // Create background
   const imageTexture = new THREE.TextureLoader().load(bgImage);
   const ditherMaterial = new THREE.ShaderMaterial({
     vertexShader,
-    fragmentShader,
+    fragmentShader: bayerFragmentShader,
     transparent: true,
     uniforms: {
       uTime: { value: 0.0 },
       uMap: { type: 't', value: imageTexture },
-      uThresholdArray: { value: bayerMatrix },
-      uThresholdMatrixWidth: { value: Math.pow(2, bayerDimension + 1) },
+      uThresholdArray: { value: null },
+      uThresholdMatrixWidth: { value: null },
     },
   });
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
   const bgMesh = new THREE.Mesh(bgGeometry, ditherMaterial);
   scene.add(bgMesh);
+  const applyBayerDither = (n) => {
+    ditherMaterial.fragmentShader = bayerFragmentShader;
+    ditherMaterial.uniforms.uThresholdMatrixWidth.value = Math.pow(2, n + 1);
+    ditherMaterial.uniforms.uThresholdArray.value = getNormalizedBayerMatrix(n);
+    ditherMaterial.needsUpdate = true;
+  };
+  applyBayerDither(1);
 
+  const applyFixedDither = (n) => {
+    ditherMaterial.fragmentShader = fixedFragmentShader;
+    ditherMaterial.needsUpdate = true;
+  };
+
+  const applyRandomDither = (n) => {
+    ditherMaterial.fragmentShader = randomFragmentShader;
+    ditherMaterial.needsUpdate = true;
+  };
+  
   // const geometry3 = new THREE.IcosahedronGeometry(10);
   // const cube3 = new THREE.Mesh(geometry3, ditherMaterial);
   // cube2.position.x = 10;
@@ -141,24 +146,27 @@ function init() {
 
   // Create GUI
   const gui = new GUI();
-  gui.add(params, 'center', 0, 100);
-  gui.add(params, 'angle', 0, 360, 1);
-  gui.add(params, 'scale', 1, 100, 1);
+  gui.add({ 'Fixed threshold': () => applyFixedDither() }, 'Fixed threshold');
+  gui.add({ 'Random threshold': () => applyRandomDither() }, 'Random threshold');
+  gui.add({ 'Bayer (0)': () => applyBayerDither(0) }, 'Bayer (0)');
+  gui.add({ 'Bayer (1)': () => applyBayerDither(1) }, 'Bayer (1)');
+  gui.add({ 'Bayer (2)': () => applyBayerDither(2) }, 'Bayer (2)');
+  gui.add({ 'Bayer (3)': () => applyBayerDither(3) }, 'Bayer (3)');
 
   function animate() {
     requestAnimationFrame(animate);
 
-    // Rotate cube
-    cube.rotation.x += 0.01;
-    cube.rotation.y += 0.01;
+    // // Rotate cube
+    // cube.rotation.x += 0.01;
+    // cube.rotation.y += 0.01;
 
-    // Rotate cube2
-    cube2.rotation.x -= 0.01;
-    cube2.rotation.z += 0.01;
+    // // Rotate cube2
+    // cube2.rotation.x -= 0.01;
+    // cube2.rotation.z += 0.01;
 
-    // Move cube2 in a circle
-    cube2.position.x = 20 * Math.cos(Date.now() * 0.0005);
-    cube2.position.y = 20 * Math.sin(Date.now() * 0.0005);
+    // // Move cube2 in a circle
+    // cube2.position.x = 20 * Math.cos(Date.now() * 0.0005);
+    // cube2.position.y = 20 * Math.sin(Date.now() * 0.0005);
 
     tick();
 
