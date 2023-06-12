@@ -15,6 +15,7 @@ import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { DotScreenShader } from 'three/examples/jsm/shaders/DotScreenShader.js';
 import vertexShader from './shaders/vertex.glsl'
 import fragmentShader from './shaders/fragment.glsl'
+import bgImage from './asset/xp_background.jpg';
 // import { DotScreenShader } from './jsm/shaders/DotScreenShader.js';
 // import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
 // import { RenderPass } from './jsm/postprocessing/RenderPass.js';
@@ -26,6 +27,22 @@ let params = {
   angle: 0,
 };
 
+// https://codegolf.stackexchange.com/questions/259633/make-a-custom-bayer-matrix
+const getNormalizedBayerMatrix = (n) => {
+  // const matrix = [];
+  // for (let i = 0; i < size; i++) {
+  //   matrix[i] = [];
+  //   for (let j = 0; j < size; j++) {
+  //     matrix[i][j] = 0;
+  //   }
+  // }
+  // return matrix;
+  let g;
+  const matrix = [...Array(1<<n)].map((_,y,a) => a.map(g=(k=n,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
+  return matrix;
+};
+// const getNormalizedBayerMatrix = n=>[...Array(1<<n)].map((_,y,a)=>a.map(g=(k=n,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
+
 function init() {
   // Create scene
   const scene = new THREE.Scene();
@@ -33,6 +50,8 @@ function init() {
   // Create camera
   const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 100;
+  // const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
+  // camera.position.z = 10;
   const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
   const initialWindowHeight = window.innerHeight;
 
@@ -74,6 +93,7 @@ function init() {
   
     // Update material
     material.uniforms.uTime.value = elapsedTime;
+    bgMaterial.uniforms.uTime.value = elapsedTime;
   };
 
   const material = new THREE.RawShaderMaterial({
@@ -87,7 +107,7 @@ function init() {
   console.log('vertexShader', vertexShader)
   console.log('fragmentShader', fragmentShader)
   const cube = new THREE.Mesh(geometry, material);
-  scene.add(cube);
+  // scene.add(cube);
 
   const geometry2 = new THREE.IcosahedronGeometry(10);
   const material2 = new THREE.MeshPhongMaterial({ color: 0x004499 });
@@ -95,7 +115,38 @@ function init() {
   cube2.position.x = 10;
   cube2.position.y = 10;
   cube2.position.z = -20;
-  scene.add(cube2);
+  // scene.add(cube2);
+
+  // TODO: use bayer matrix, function here
+  // const bayerMatrix = getNormalizedBayerMatrix(3);
+  const bayerMatrix = getNormalizedBayerMatrix(2);
+  console.log('bayerMatrix', bayerMatrix)
+
+  // Create background
+  const bgTexture = new THREE.TextureLoader().load(bgImage);
+  // const bgMaterial = new THREE.RawShaderMaterial({
+  const bgMaterial = new THREE.ShaderMaterial({
+    vertexShader,
+    fragmentShader,
+    transparent: true,
+    // map: bgTexture,
+    uniforms: {
+      uTime: { value: 0.0 },
+      uMap: { type: 't', value: bgTexture },
+      uThresholdMap: { value: bayerMatrix },
+      // uThresholdMap: new THREE.Uniform(bayerMatrix),
+    },
+  });
+  const bgGeometry = new THREE.PlaneGeometry(100, 60);
+  const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
+  scene.add(bgMesh);
+
+  // const geometry3 = new THREE.IcosahedronGeometry(10);
+  // const cube3 = new THREE.Mesh(geometry3, bgMaterial);
+  // cube2.position.x = 10;
+  // cube2.position.y = 10;
+  // cube2.position.z = -20;
+  // scene.add(cube3);
 
   // Create GUI
   const gui = new GUI();
