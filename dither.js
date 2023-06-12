@@ -9,17 +9,10 @@ https://thebookofshaders.com/00/
 import * as THREE from 'three';
 import { GUI } from 'dat.gui';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
-import { DotScreenShader } from 'three/examples/jsm/shaders/DotScreenShader.js';
+
 import vertexShader from './shaders/vertex.glsl'
 import fragmentShader from './shaders/fragment.glsl'
 import bgImage from './asset/xp_background.jpg';
-// import { DotScreenShader } from './jsm/shaders/DotScreenShader.js';
-// import { EffectComposer } from './jsm/postprocessing/EffectComposer.js';
-// import { RenderPass } from './jsm/postprocessing/RenderPass.js';
-// import { ShaderPass } from './jsm/postprocessing/ShaderPass.js';
 
 let params = {
   scale: 1,
@@ -27,21 +20,24 @@ let params = {
   angle: 0,
 };
 
+/* TODOS:
+- Clean up
+- Add variable dithering algorithm, try to get all the ones in the wikipedia article
+- Add blinn-phong on top of this shader?
+- Add variable dark and bright color options
+- Create a better scene with moving elements
+*/
+
 // https://codegolf.stackexchange.com/questions/259633/make-a-custom-bayer-matrix
 const getNormalizedBayerMatrix = (n) => {
-  // const matrix = [];
-  // for (let i = 0; i < size; i++) {
-  //   matrix[i] = [];
-  //   for (let j = 0; j < size; j++) {
-  //     matrix[i][j] = 0;
-  //   }
-  // }
-  // return matrix;
   let g;
   const matrix = [...Array(1<<n)].map((_,y,a) => a.map(g=(k=n,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
-  return matrix;
+  const serializedMatrix = new THREE.Matrix4();
+  serializedMatrix.set(...matrix.flat());
+  serializedMatrix.multiplyScalar(1/16);
+  // serializedMatrix.multiplyScalar(1/Math.pow(n, 3));
+  return serializedMatrix;
 };
-// const getNormalizedBayerMatrix = n=>[...Array(1<<n)].map((_,y,a)=>a.map(g=(k=n,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
 
 function init() {
   // Create scene
@@ -50,8 +46,6 @@ function init() {
   // Create camera
   const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 100;
-  // const camera = new THREE.OrthographicCamera( window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000 );
-  // camera.position.z = 10;
   const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
   const initialWindowHeight = window.innerHeight;
 
@@ -93,7 +87,7 @@ function init() {
   
     // Update material
     material.uniforms.uTime.value = elapsedTime;
-    bgMaterial.uniforms.uTime.value = elapsedTime;
+    ditherMaterial.uniforms.uTime.value = elapsedTime;
   };
 
   const material = new THREE.RawShaderMaterial({
@@ -123,26 +117,24 @@ function init() {
   console.log('bayerMatrix', bayerMatrix)
 
   // Create background
-  const bgTexture = new THREE.TextureLoader().load(bgImage);
-  // const bgMaterial = new THREE.RawShaderMaterial({
-  const bgMaterial = new THREE.ShaderMaterial({
+  const imageTexture = new THREE.TextureLoader().load(bgImage);
+  const ditherMaterial = new THREE.ShaderMaterial({
     vertexShader,
     fragmentShader,
     transparent: true,
-    // map: bgTexture,
     uniforms: {
       uTime: { value: 0.0 },
-      uMap: { type: 't', value: bgTexture },
+      uMap: { type: 't', value: imageTexture },
       uThresholdMap: { value: bayerMatrix },
       // uThresholdMap: new THREE.Uniform(bayerMatrix),
     },
   });
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
-  const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
+  const bgMesh = new THREE.Mesh(bgGeometry, ditherMaterial);
   scene.add(bgMesh);
 
   // const geometry3 = new THREE.IcosahedronGeometry(10);
-  // const cube3 = new THREE.Mesh(geometry3, bgMaterial);
+  // const cube3 = new THREE.Mesh(geometry3, ditherMaterial);
   // cube2.position.x = 10;
   // cube2.position.y = 10;
   // cube2.position.z = -20;
@@ -153,21 +145,6 @@ function init() {
   gui.add(params, 'center', 0, 100);
   gui.add(params, 'angle', 0, 360, 1);
   gui.add(params, 'scale', 1, 100, 1);
-
-  // TODO: add dithering
-
-  // const composer = new EffectComposer(renderer);
-  // composer.addPass(new RenderPass(scene, camera));
-
-  // const effect1 = new ShaderPass(DotScreenShader);
-  // // effect1.uniforms.center.value = params.center;
-  // effect1.uniforms.angle.value = params.angle;
-  // effect1.uniforms.scale.value = params.scale;
-  // composer.addPass(effect1);
-
-  // const effect2 = new ShaderPass( RGBShiftShader );
-  // effect2.uniforms[ 'amount' ].value = 0.0015;
-  // composer.addPass( effect2 );
 
   function animate() {
     requestAnimationFrame(animate);
@@ -187,7 +164,6 @@ function init() {
     tick();
 
     renderer.render(scene, camera);
-    // composer.render();
   };
 
   animate();
