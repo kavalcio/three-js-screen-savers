@@ -12,10 +12,12 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import vertexShader from './shaders/vertex.glsl';
 import bayerFragmentShader from './shaders/fragment-bayer.glsl';
+import blueFragmentShader from './shaders/fragment-blue.glsl';
 import fixedFragmentShader from './shaders/fragment-fixed.glsl';
 import randomFragmentShader from './shaders/fragment-random.glsl';
 import originalFragmentShader from './shaders/fragment-original.glsl';
 import bgImage from './asset/xp_background.jpg';
+import blueNoiseImage from './asset/blue_noise_128_128_1.png';
 
 /* TODOS:
 - Clean up
@@ -106,6 +108,7 @@ function init() {
 
   // Create background
   const imageTexture = new THREE.TextureLoader().load(bgImage);
+  const blueNoiseTexture = new THREE.TextureLoader().load(blueNoiseImage);
   const ditherMaterial = new THREE.ShaderMaterial({
     vertexShader,
     // fragmentShader: bayerFragmentShader,
@@ -115,6 +118,7 @@ function init() {
       uMap: { type: 't', value: imageTexture },
       uThresholdArray: { value: null },
       uThresholdMatrixWidth: { value: null },
+      uThresholdTexture: { value: null },
     },
   });
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
@@ -139,6 +143,12 @@ function init() {
     ditherMaterial.fragmentShader = originalFragmentShader;
     ditherMaterial.needsUpdate = true;
   };
+  const applyBlueNoise = (n) => {
+    ditherMaterial.fragmentShader = blueFragmentShader;
+    ditherMaterial.uniforms.uThresholdMatrixWidth.value = 128;
+    ditherMaterial.uniforms.uThresholdTexture.value = blueNoiseTexture;
+    ditherMaterial.needsUpdate = true;
+  };
   
   // const geometry3 = new THREE.IcosahedronGeometry(10);
   // const cube3 = new THREE.Mesh(geometry3, ditherMaterial);
@@ -155,10 +165,11 @@ function init() {
   gui.add({ 'Original': () => applyNoDither() }, 'Original');
   gui.add({ 'Fixed threshold': () => applyFixedDither() }, 'Fixed threshold');
   gui.add({ 'Random threshold': () => applyRandomDither() }, 'Random threshold');
-  gui.add({ 'Bayer (0)': () => applyBayerDither(0) }, 'Bayer (0)');
-  gui.add({ 'Bayer (1)': () => applyBayerDither(1) }, 'Bayer (1)');
-  gui.add({ 'Bayer (2)': () => applyBayerDither(2) }, 'Bayer (2)');
-  gui.add({ 'Bayer (3)': () => applyBayerDither(3) }, 'Bayer (3)');
+  gui.add({ 'Bayer (level 0)': () => applyBayerDither(0) }, 'Bayer (level 0)');
+  gui.add({ 'Bayer (level 1)': () => applyBayerDither(1) }, 'Bayer (level 1)');
+  gui.add({ 'Bayer (level 2)': () => applyBayerDither(2) }, 'Bayer (level 2)');
+  gui.add({ 'Bayer (level 3)': () => applyBayerDither(3) }, 'Bayer (level 3)');
+  gui.add({ 'Blue noise': () => applyBlueNoise() }, 'Blue noise');
 
   function animate() {
     requestAnimationFrame(animate);
