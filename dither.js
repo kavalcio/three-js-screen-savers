@@ -17,6 +17,8 @@ import fixedFragmentShader from './shaders/fragment-fixed.glsl';
 import randomFragmentShader from './shaders/fragment-random.glsl';
 import originalFragmentShader from './shaders/fragment-original.glsl';
 import bgImage from './asset/xp_background.jpg';
+
+/* Blue noise mask downloaded from: http://momentsingraphics.de/BlueNoise.html */
 import blueNoiseImage from './asset/blue_noise_128_128_1.png';
 
 /* TODOS:
@@ -29,7 +31,7 @@ import blueNoiseImage from './asset/blue_noise_128_128_1.png';
 - Add text on screen to show which dithering algorithm is being used
 */
 
-// Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638
+/* Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638 */
 const getNormalizedBayerMatrix = (n) => {
   let g;
   let t = n + 1;
