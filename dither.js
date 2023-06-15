@@ -39,6 +39,12 @@ const getNormalizedBayerMatrix = (n) => {
   return matrix.flat().map(el => el / Math.pow(2, 2 * n + 2));
 };
 
+const createObject = (mat) => {
+  const geo = new THREE.IcosahedronGeometry(10);
+  const obj = new THREE.Mesh(geo, mat);
+  return obj;
+}
+
 function init() {
   // Create scene
   const scene = new THREE.Scene();
@@ -75,45 +81,20 @@ function init() {
   directionalLight.position.z = 1;
   scene.add(directionalLight);
 
-  // Create objects
-  const geometry = new THREE.IcosahedronGeometry(10);
-
   // Create clock
   const clock = new THREE.Clock();
   const tick = () =>
   {
     const elapsedTime = clock.getElapsedTime();
-  
-    // Update material
-    material.uniforms.uTime.value = elapsedTime;
     ditherMaterial.uniforms.uTime.value = elapsedTime;
   };
 
-  const material = new THREE.RawShaderMaterial({
-    vertexShader,
-    fragmentShader: bayerFragmentShader,
-    transparent: true,
-    uniforms: {
-      uTime: { value: 0.0 },
-    },
-  });
-  const cube = new THREE.Mesh(geometry, material);
-  // scene.add(cube);
-
-  const geometry2 = new THREE.IcosahedronGeometry(10);
-  const material2 = new THREE.MeshPhongMaterial({ color: 0x004499 });
-  const cube2 = new THREE.Mesh(geometry2, material2);
-  cube2.position.x = 10;
-  cube2.position.y = 10;
-  cube2.position.z = -20;
-  // scene.add(cube2);
-
-  // Create background
+  // Create material
   const imageTexture = new THREE.TextureLoader().load(bgImage);
   const blueNoiseTexture = new THREE.TextureLoader().load(blueNoiseImage);
   const ditherMaterial = new THREE.ShaderMaterial({
     vertexShader,
-    // fragmentShader: bayerFragmentShader,
+    fragmentShader: bayerFragmentShader,
     transparent: true,
     uniforms: {
       uTime: { value: 0.0 },
@@ -123,9 +104,6 @@ function init() {
       uThresholdTexture: { value: null },
     },
   });
-  const bgGeometry = new THREE.PlaneGeometry(100, 60);
-  const bgMesh = new THREE.Mesh(bgGeometry, ditherMaterial);
-  scene.add(bgMesh);
 
   const applyBayerDither = (n) => {
     ditherMaterial.fragmentShader = bayerFragmentShader;
@@ -151,16 +129,21 @@ function init() {
     ditherMaterial.uniforms.uThresholdTexture.value = blueNoiseTexture;
     ditherMaterial.needsUpdate = true;
   };
-  
-  // const geometry3 = new THREE.IcosahedronGeometry(10);
-  // const cube3 = new THREE.Mesh(geometry3, ditherMaterial);
-  // cube2.position.x = 10;
-  // cube2.position.y = 10;
-  // cube2.position.z = -20;
-  // scene.add(cube3);
 
   // Initialize page to show Bayer dithering
   applyBayerDither(1);
+
+  // Create objects
+  const obj1 = createObject(ditherMaterial);
+  // scene.add(obj1);
+
+  const obj2 = createObject(ditherMaterial);
+  // scene.add(obj2);
+
+  const planeGeo = new THREE.PlaneGeometry(100, 60);
+  const planeObj = new THREE.Mesh(planeGeo, ditherMaterial);
+  scene.add(planeObj);
+  // planeObj.position.z = -20;
 
   // Create GUI
   const gui = new GUI();
@@ -176,17 +159,13 @@ function init() {
   function animate() {
     requestAnimationFrame(animate);
 
-    // // Rotate cube
-    // cube.rotation.x += 0.01;
-    // cube.rotation.y += 0.01;
+    // Rotate obj
+    obj2.rotation.x -= 0.01;
+    obj2.rotation.z += 0.01;
 
-    // // Rotate cube2
-    // cube2.rotation.x -= 0.01;
-    // cube2.rotation.z += 0.01;
-
-    // // Move cube2 in a circle
-    // cube2.position.x = 20 * Math.cos(Date.now() * 0.0005);
-    // cube2.position.y = 20 * Math.sin(Date.now() * 0.0005);
+    // Move obj in a circle
+    obj2.position.x = 20 * Math.cos(Date.now() * 0.0005);
+    obj2.position.y = 20 * Math.sin(Date.now() * 0.0005);
 
     tick();
 
