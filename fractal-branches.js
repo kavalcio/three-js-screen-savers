@@ -6,10 +6,10 @@ const ROOT_RADIUS = 2;
 const BRANCH_ANGLE = Math.PI / 3;
 const BRANCHES_PER_LEVEL = 3;
 const MAX_DEPTH = 5;
+const ROTATION_SPEED = 0.001;
 
-// TODO: add some randomization to branches per level
+// TODO: add some randomization to branches per level, rotationspeed, etc
 // TODO: add gui to control parameters
-// TODO: rotate branches over time
 // TODO: add ability to click to add custom branches
 function init() {
   // Create scene
@@ -41,10 +41,12 @@ function init() {
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
   scene.add(ambientLight);
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
-  directionalLight.position.x = 1;
-  directionalLight.position.z = 1;
+  const directionalLight = new THREE.DirectionalLight(0xdddddd, 1);
+  directionalLight.position.set(1, 0, 1);
   scene.add(directionalLight);
+  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 1);
+  directionalLight2.position.set(-1, 1, 1);
+  scene.add(directionalLight2);
 
   // Create fractal tree
   const geometry = new THREE.CylinderGeometry(ROOT_RADIUS, ROOT_RADIUS, ROOT_HEIGHT, 5); 
@@ -84,9 +86,21 @@ function init() {
 
   createBranch(root, 0);
 
+  // Rotate branches over time
+  const animationRotationAxis = new THREE.Vector3(0, 1, 0);
+  const rotateBranch = (branch, angle) => {
+    branch.rotateOnAxis(animationRotationAxis, angle);
+    // Recursively rotate children
+    branch.children.forEach(child => {
+      rotateBranch(child, angle);
+    });
+  };
+
   // Render loop
   function animate() {
     requestAnimationFrame(animate);
+
+    rotateBranch(root.children[0], ROTATION_SPEED);
 
     renderer.render(scene, camera);
   };
