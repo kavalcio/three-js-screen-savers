@@ -9,6 +9,7 @@ module.exports = {
     bezier: './bezier.js',
     refraction: './refraction.js',
     dither: './dither.js',
+    fractalBranches: './fractal-branches.js',
   },
   module: {
     rules: [
@@ -68,6 +69,13 @@ module.exports = {
       template: './template.html',
       chunks: ['dither'],
       filename: './dither.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Fractal Branches',
+      template: './template.html',
+      chunks: ['fractalBranches'],
+      filename: './fractal-branches.html',
     }),
   ],
   output: {
