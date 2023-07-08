@@ -1,12 +1,16 @@
-
 import * as THREE from 'three';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
-const ROOT_HEIGHT = 50;
+const ROOT_HEIGHT = 70;
 const ROOT_RADIUS = 2;
 const BRANCH_ANGLE = Math.PI / 3;
 const BRANCHES_PER_LEVEL = 3;
+const MAX_DEPTH = 5;
 
+// TODO: add some randomization to branches per level
+// TODO: add gui to control parameters
+// TODO: rotate branches over time
+// TODO: add ability to click to add custom branches
 function init() {
   // Create scene
   const scene = new THREE.Scene();
@@ -37,7 +41,6 @@ function init() {
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
   scene.add(ambientLight);
-
   const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
   directionalLight.position.x = 1;
   directionalLight.position.z = 1;
@@ -46,49 +49,40 @@ function init() {
   // Create fractal tree
   const geometry = new THREE.CylinderGeometry(ROOT_RADIUS, ROOT_RADIUS, ROOT_HEIGHT, 5); 
   const material = new THREE.MeshPhongMaterial({ color: 0xbbbbbb }); 
-  const rootCylinder = new THREE.Mesh(geometry, material);
-  scene.add(rootCylinder);
 
-  console.log(rootCylinder);
-
+  // Recursive function that creates branches as children of a parent branch.
   const createBranch = (parent, depth) => {
-    if (depth > 1) return;
+    if (depth > MAX_DEPTH) return;
     
     const branch = new THREE.Mesh(geometry, material);
     branch.scale.set(0.7, 0.7, 0.7);
 
-    // Rotate branch around root randomly
-    branch.rotateOnAxis(new THREE.Vector3(0, 1, 0), 2 * Math.random() * Math.PI);
+    // Skip rotation and translation for first branch so that it's straight up
+    if (depth > 0) {
+      // Rotate branch around parent randomly
+      branch.rotateOnAxis(new THREE.Vector3(0, 1, 0), 2 * Math.random() * Math.PI);
 
-    // Put branch at a 60 degree offset from root
-    branch.rotateOnAxis(new THREE.Vector3(0, 0, 1), BRANCH_ANGLE);
+      // Put branch at a 60 degree offset from parent
+      branch.rotateOnAxis(new THREE.Vector3(0, 0, 1), BRANCH_ANGLE);
 
-    // Set branch position
-    branch.position.y = ROOT_HEIGHT * (Math.random() - 0.5);
-    branch.translateOnAxis(new THREE.Vector3(0, 1, 0), ROOT_HEIGHT * branch.scale.y / 2);
+      // Set branch position
+      branch.position.y = ROOT_HEIGHT * (Math.random() - 0.5);
+      branch.translateOnAxis(new THREE.Vector3(0, 1, 0), ROOT_HEIGHT * branch.scale.y / 2);
+    }
 
     parent.add(branch);
-    console.log('branch', branch);
 
     // Recursively create more branches
-    // createBranch(branch, depth + 1);
     for (let i = 0; i < BRANCHES_PER_LEVEL; i++) {
       createBranch(branch, depth + 1);
     }
   };
 
-  // const cylinder2 = cylinder.clone();
-  // cylinder2.scale.set(0.5, 0.5, 0.5);
-  // const direction = new THREE.Vector3(0, 1, 0);
-  // const axis = new THREE.Vector3(0, 0, 1);
-  // cylinder2.rotateOnAxis(axis, BRANCH_ANGLE);
-  // cylinder2.position.y = ROOT_HEIGHT * (Math.random() - 0.5);
-  // cylinder2.translateOnAxis(direction, ROOT_HEIGHT * cylinder2.scale.y / 2);
-  // cylinder.add(cylinder2);
+  const root = new THREE.Object3D();
+  root.position.y = -ROOT_HEIGHT / 4;
+  scene.add(root);
 
-  createBranch(rootCylinder, 0);
-  createBranch(rootCylinder, 0);
-  createBranch(rootCylinder, 0);
+  createBranch(root, 0);
 
   // Render loop
   function animate() {
