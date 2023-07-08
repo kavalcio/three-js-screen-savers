@@ -8,6 +8,7 @@ const BRANCH_ANGLE = 60;
 const BRANCHES_PER_LEVEL = 3;
 const RECURSION_DEPTH = 5;
 const ROTATION_SPEED = 0.001;
+const BRANCH_SHRINK_RATE = 0.7;
 
 let params = {
   baseHeight: BASE_HEIGHT,
@@ -16,13 +17,11 @@ let params = {
   branchesPerLevel: BRANCHES_PER_LEVEL,
   recursionDepth: RECURSION_DEPTH,
   rotationSpeed: ROTATION_SPEED,
+  branchShrinkRate: BRANCH_SHRINK_RATE,
 };
 let paramsToApply = { ...params };
 
-// TODO: add param to control branch shrink rate
 // TODO: is it possible to add tooltip/notes to each gui option?
-// TODO: add some randomization to branches per level, rotationspeed, etc
-// TODO: add gui to control parameters
 // TODO: add ability to click to add custom branches
 function init() {
   // Create scene
@@ -70,7 +69,7 @@ function init() {
     if (depth > params.recursionDepth) return;
     
     const branch = new THREE.Mesh(branchGeometry, branchMaterial);
-    branch.scale.set(0.7, 0.7, 0.7);
+    branch.scale.set(params.branchShrinkRate, params.branchShrinkRate, params.branchShrinkRate);
 
     // Skip rotation and translation for first branch so that it's straight up
     if (depth > 0) {
@@ -130,6 +129,7 @@ function init() {
   gui.add(paramsToApply, 'branchesPerLevel', 1, 5, 1);
   gui.add(paramsToApply, 'recursionDepth', 1, 8, 1);
   gui.add(paramsToApply, 'rotationSpeed', 0, 0.01);
+  gui.add(paramsToApply, 'branchShrinkRate', 0.5, 0.9, 0.1);
   gui.add({ 'Apply Changes': resetScene }, 'Apply Changes');
 
   // Render loop
