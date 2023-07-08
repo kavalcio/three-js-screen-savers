@@ -17,7 +17,7 @@ void main()
   // https://en.wikipedia.org/wiki/Relative_luminance
   float brightness = (0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b);
 
-  float thresholdValue = 0.5;
+  float thresholdValue = random(vUv);
 
-  gl_FragColor = (brightness) > random(vUv) ? vec4(0.8, 0.8, 0.8, 1.) : vec4(0.1, 0.15, 0.1, 1.);
+  gl_FragColor = (brightness) > thresholdValue ? vec4(0.8, 0.8, 0.8, 1.) : vec4(0.1, 0.15, 0.1, 1.);
 }
