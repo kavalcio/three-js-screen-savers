@@ -10,19 +10,24 @@ const RECURSION_DEPTH = 5;
 const ROTATION_SPEED = 0.001;
 const BRANCH_SHRINK_RATE = 0.7;
 
-let params = {
-  baseHeight: BASE_HEIGHT,
-  baseRadius: BASE_RADIUS,
-  branchAngle: BRANCH_ANGLE,
-  branchesPerLevel: BRANCHES_PER_LEVEL,
-  recursionDepth: RECURSION_DEPTH,
-  rotationSpeed: ROTATION_SPEED,
-  branchShrinkRate: BRANCH_SHRINK_RATE,
+const params = {
+  baseHeight: BASE_HEIGHT, /* Base cylinder height of a branch, shrinks as recursion gets deeper */
+  baseRadius: BASE_RADIUS, /* Base cylinder radius of a branch, shrinks as recursion gets deeper */
+  branchAngle: BRANCH_ANGLE, /* Angle between each child and parent branch */
+  branchesPerLevel: BRANCHES_PER_LEVEL, /* Number of children generated per parent branch */
+  recursionDepth: RECURSION_DEPTH, /* Max recursion depth allowed when generating tree */
+  branchShrinkRate: BRANCH_SHRINK_RATE, /* Factor by which branches shrink as you move up recursion levels */
 };
-let paramsToApply = { ...params };
+const paramsToApply = { ...params };
 
-// TODO: is it possible to add tooltip/notes to each gui option?
-// TODO: add ability to click to add custom branches
+const dynamicParams = {
+  rotationSpeed: ROTATION_SPEED, /* Speed at which each branch rotates around its parent branch */
+};
+
+const applyParams = () => Object.keys(paramsToApply).forEach(key => params[key] = paramsToApply[key]);
+
+// TODO: change branch color on hover
+// TODO: add ability to right click to remove branch + children
 function init() {
   // Create scene
   const scene = new THREE.Scene();
@@ -61,8 +66,9 @@ function init() {
   scene.add(directionalLight2);
 
   // Initialize tree geometry and material
-  let branchGeometry = new THREE.CylinderGeometry(params.baseRadius, params.baseRadius, params.baseHeight, 5); 
-  const branchMaterial = new THREE.MeshPhongMaterial({ color: 0xbbbbbb }); 
+  let branchGeometry = new THREE.CylinderGeometry(params.baseRadius, params.baseRadius, params.baseHeight, 5);
+  const branchMaterial = new THREE.MeshPhongMaterial({ color: 0xbbbbbb });
+  const branchHoverMaterial = new THREE.MeshPhongMaterial({ color: 0xbb2200 })
 
   // Recursive function that creates branches as children of a parent branch
   const createBranch = (parent, depth) => {
@@ -104,7 +110,7 @@ function init() {
 
   let tree = createTree();
 
-  // Rotate branches over time
+  // Function that rotates branches over time
   const animationRotationAxis = new THREE.Vector3(0, 1, 0);
   const rotateBranch = (branch, angle) => {
     branch.rotateOnAxis(animationRotationAxis, angle);
@@ -116,27 +122,70 @@ function init() {
 
   // Create GUI
   const gui = new GUI();
+  gui.width = 300;
   const resetScene = () => {
-    params = { ...paramsToApply };
+    applyParams();
     branchGeometry = new THREE.CylinderGeometry(params.baseRadius, params.baseRadius, params.baseHeight, 5); 
 
     scene.remove(tree);
     tree = createTree();
   };
-  gui.add(paramsToApply, 'baseHeight', 30, 100, 1);
-  gui.add(paramsToApply, 'baseRadius', 1, 5, 0.1);
-  gui.add(paramsToApply, 'branchAngle', 0, 90, 1);
-  gui.add(paramsToApply, 'branchesPerLevel', 1, 5, 1);
-  gui.add(paramsToApply, 'recursionDepth', 1, 8, 1);
-  gui.add(paramsToApply, 'rotationSpeed', 0, 0.01);
-  gui.add(paramsToApply, 'branchShrinkRate', 0.5, 0.9, 0.1);
-  gui.add({ 'Apply Changes': resetScene }, 'Apply Changes');
+  const treeGuiFolder = gui.addFolder('Tree Params');
+  treeGuiFolder.add(paramsToApply, 'baseHeight', 30, 100, 1);
+  treeGuiFolder.add(paramsToApply, 'baseRadius', 1, 5, 0.1);
+  treeGuiFolder.add(paramsToApply, 'branchAngle', 0, 90, 1);
+  treeGuiFolder.add(paramsToApply, 'branchesPerLevel', 1, 5, 1);
+  treeGuiFolder.add(paramsToApply, 'recursionDepth', 1, 8, 1);
+  treeGuiFolder.add(paramsToApply, 'branchShrinkRate', 0.5, 0.9, 0.1);
+  treeGuiFolder.add({ 'Regenerate Tree': resetScene }, 'Regenerate Tree');
+  treeGuiFolder.open();
+  const animationGuiFolder = gui.addFolder('Animation Params');
+  animationGuiFolder.add(dynamicParams, 'rotationSpeed', 0, 0.01);
+  animationGuiFolder.open();
+
+  // Create new offshoots when a branch is clicked
+  const raycaster = new THREE.Raycaster();
+  const pointer = new THREE.Vector2();
+
+  let hovered = null;
+
+  const onPointerMove = (event) => {
+    pointer.x = (event.clientX / window.innerWidth) * 2 - 1;
+    pointer.y = - (event.clientY / window.innerHeight) * 2 + 1;
+    raycaster.setFromCamera(pointer, camera);
+  };
+
+  const onBranchClick = (event) => {
+    const [intersect] = raycaster.intersectObjects(scene.children) || [];
+    if (intersect) {
+      createBranch(intersect.object, params.recursionDepth);
+    }
+  };
+
+  const checkBranchHover = () => {
+    const [intersect] = raycaster.intersectObjects(scene.children) || [];
+    if (hovered) {
+      if (intersect?.object?.uuid !== hovered.object.uuid) {
+        hovered.object.material = branchMaterial;
+      }
+    }
+
+    if (intersect) {
+      intersect.object.material = branchHoverMaterial;
+      hovered = intersect;
+    }
+  };
+
+  window.addEventListener('pointermove', onPointerMove);
+  window.addEventListener('click', onBranchClick);
 
   // Render loop
   function animate() {
     requestAnimationFrame(animate);
 
-    rotateBranch(tree.children[0], params.rotationSpeed);
+    rotateBranch(tree.children[0], dynamicParams.rotationSpeed);
+
+    checkBranchHover();
 
     renderer.render(scene, camera);
   };
