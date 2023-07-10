@@ -113,6 +113,7 @@ function init() {
   // Function that rotates branches over time
   const animationRotationAxis = new THREE.Vector3(0, 1, 0);
   const rotateBranch = (branch, angle) => {
+    if (!branch) return;
     branch.rotateOnAxis(animationRotationAxis, angle);
     // Recursively rotate children
     branch.children.forEach(child => {
@@ -143,7 +144,6 @@ function init() {
   animationGuiFolder.add(dynamicParams, 'rotationSpeed', 0, 0.01);
   animationGuiFolder.open();
 
-  // Create new offshoots when a branch is clicked
   const raycaster = new THREE.Raycaster();
   const pointer = new THREE.Vector2();
 
@@ -155,10 +155,19 @@ function init() {
     raycaster.setFromCamera(pointer, camera);
   };
 
-  const onBranchClick = (event) => {
+  // Create new child branch when a branch is left clicked
+  const onBranchClick = () => {
     const [intersect] = raycaster.intersectObjects(scene.children) || [];
     if (intersect) {
       createBranch(intersect.object, params.recursionDepth);
+    }
+  };
+
+  // Delete branch when a branch is right clicked
+  const onBranchRightClick = () => {
+    const [intersect] = raycaster.intersectObjects(scene.children) || [];
+    if (intersect) {
+      intersect.object.parent.remove(intersect.object);
     }
   };
 
@@ -178,6 +187,7 @@ function init() {
 
   window.addEventListener('pointermove', onPointerMove);
   window.addEventListener('click', onBranchClick);
+  window.addEventListener('contextmenu', onBranchRightClick);
 
   // Render loop
   function animate() {

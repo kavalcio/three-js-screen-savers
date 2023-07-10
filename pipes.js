@@ -160,7 +160,7 @@ function init() {
     for (let i = 0; i < params.pipeCount; i++) {
       const start = new Vector3(getRandomInt(-30, 30), getRandomInt(-30, 30), getRandomInt(-30, 30));
       const end = getRandomEndpoint({ directions: DIRECTIONS, oldEnd: start });
-        pipeList.push(createPipe({ start, end }));
+      pipeList.push(createPipe({ start, end }));
     }
   }
   createPipes();

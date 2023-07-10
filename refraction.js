@@ -34,7 +34,7 @@ function init() {
   window.addEventListener('resize', onWindowResize, false);
 
   // Create renderer
-  const renderer = new THREE.WebGLRenderer();
+  const renderer = new THREE.WebGLRenderer({ antialias: true });
   renderer.setSize(window.innerWidth, window.innerHeight);
   const controls = new OrbitControls(camera, renderer.domElement);
   document.body.appendChild(renderer.domElement);
