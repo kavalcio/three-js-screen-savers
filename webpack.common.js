@@ -10,6 +10,7 @@ module.exports = {
     refraction: './refraction.js',
     dither: './dither.js',
     fractalBranches: './fractal-branches.js',
+    dice: './dice.js',
   },
   module: {
     rules: [
@@ -76,6 +77,13 @@ module.exports = {
       template: './template.html',
       chunks: ['fractalBranches'],
       filename: './fractal-branches.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Dice Simulator',
+      template: './template.html',
+      chunks: ['dice'],
+      filename: './dice.html',
     }),
   ],
   output: {
