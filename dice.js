@@ -5,11 +5,32 @@ import * as CANNON from 'cannon-es'
 import Stats from 'stats.js';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
+// TODO: add walls
+// TODO: randomize dice positions, velocity and angular velocity
+// TODO: add dice textures
+// TODO: add shadows
+// TODO: add sounds
+// TODO: add up numbers on the upper face of each die after a roll
+
+let params = {
+  'd4Count': 2,
+  'd6Count': 0,
+  'd8Count': 0,
+  'd12Count': 0,
+  'd20Count': 1,
+};
+
+let scene;
+let world;
 const objectsToUpdate = [];
 
 const icosahedronGeometry = new THREE.IcosahedronGeometry(0.5, 0);
+const dodecahedronGeometry = new THREE.DodecahedronGeometry(0.5, 0);
+const octahedronGeometry = new THREE.OctahedronGeometry(0.5, 0);
+const boxGeometry = new THREE.BoxGeometry(0.5, 0.5, 0.5);
 const tetrahedronGeometry = new THREE.TetrahedronGeometry(0.5, 0);
-const material = new THREE.MeshPhongMaterial({ color: 0x00ff00 });
+
+const material = new THREE.MeshNormalMaterial({ color: 0x00ff00 });
 
 const getPolyhedronShape = (mesh) => {
   let geometry = new THREE.BufferGeometry();
@@ -32,32 +53,64 @@ const getPolyhedronShape = (mesh) => {
   return new CANNON.ConvexPolyhedron({ vertices: points, faces });
 };
 
-const createIcosahedron = () => {
-  const mesh = new THREE.Mesh(icosahedronGeometry, material);
+const createDie = ({ geometry }) => {
+  const mesh = new THREE.Mesh(geometry, material);
 
   const shape = getPolyhedronShape(mesh);
   const body = new CANNON.Body({
     mass: 1,
     shape,
-    position: new CANNON.Vec3(0, 3, 0),
-    angularVelocity: new CANNON.Vec3(4, 1, -3),
+    position: new CANNON.Vec3((Math.random() - 0.5) * 5, Math.random() * 3 + 1, (Math.random() - 0.5) * 5),
+    quaternion: new CANNON.Quaternion((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2),
+    velocity: new CANNON.Vec3((Math.random() - 0.5) * 2, -Math.random() * 2, (Math.random() - 0.5) * 2),
+    angularVelocity: new CANNON.Vec3(Math.random() * 5, Math.random() * 5, Math.random() * 5),
   });
 
   return { mesh, body };
 };
 
-const createTetrahedron = () => {
-  const mesh = new THREE.Mesh(tetrahedronGeometry, material);
-
-  const shape = getPolyhedronShape(mesh);
-  const body = new CANNON.Body({
-    mass: 1,
-    shape,
-    position: new CANNON.Vec3(0, 2, 0),
-    angularVelocity: new CANNON.Vec3(-1, 4, 1),
+const rollDice = () => {
+  objectsToUpdate.forEach((object) => {
+    world.removeBody(object.body);
+    scene.remove(object.mesh);
   });
+  objectsToUpdate.splice(0, objectsToUpdate.length);
 
-  return { mesh, body };
+  // Create param.d20Count icosahedrons
+  for (let i = 0; i < params.d20Count; i++) {
+    const { mesh, body } = createDie({ geometry: icosahedronGeometry});
+    objectsToUpdate.push({ mesh, body });
+    scene.add(mesh);
+    world.addBody(body);
+  }
+  // Create param.d12Count dodecahedrons
+  for (let i = 0; i < params.d12Count; i++) {
+    const { mesh, body } = createDie({ geometry: dodecahedronGeometry});
+    objectsToUpdate.push({ mesh, body });
+    scene.add(mesh);
+    world.addBody(body);
+  }
+  // Create param.d8Count octahedrons
+  for (let i = 0; i < params.d8Count; i++) {
+    const { mesh, body } = createDie({ geometry: octahedronGeometry});
+    objectsToUpdate.push({ mesh, body });
+    scene.add(mesh);
+    world.addBody(body);
+  }
+  // Create param.d6Count cubes
+  for (let i = 0; i < params.d6Count; i++) {
+    const { mesh, body } = createDie({ geometry: boxGeometry});
+    objectsToUpdate.push({ mesh, body });
+    scene.add(mesh);
+    world.addBody(body);
+  }
+  // Create param.d4Count tetrahedrons
+  for (let i = 0; i < params.d4Count; i++) {
+    const { mesh, body } = createDie({ geometry: tetrahedronGeometry});
+    objectsToUpdate.push({ mesh, body });
+    scene.add(mesh);
+    world.addBody(body);
+  }
 };
 
 function init() {
@@ -65,15 +118,16 @@ function init() {
   const clock = new THREE.Clock();
 
   // Create scene
-  const scene = new THREE.Scene();
+  scene = new THREE.Scene();
 
-  const axesHelper = new THREE.AxesHelper( 5 );
-  scene.add( axesHelper );
+  // const axesHelper = new THREE.AxesHelper( 5 );
+  // scene.add( axesHelper );
 
   // Create camera
   const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 10000);
-  camera.position.z = 10;
-  camera.position.y = 3;
+  camera.position.z = 12;
+  camera.position.y = 6;
+  camera.position.x = 9;
   camera.lookAt(scene.position);
   const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
   const initialWindowHeight = window.innerHeight;
@@ -107,10 +161,8 @@ function init() {
   directionalLight2.lookAt(scene.position);
   scene.add(directionalLight2);
 
-  /**
-   * PHYSICS --------------------------------------------------------
-   */
-  const world = new CANNON.World();
+  // Create physics world
+  world = new CANNON.World();
   world.gravity.set(0, - 9.82, 0);
 
   // Create contact material
@@ -137,42 +189,28 @@ function init() {
     mass: 0,
     shape: floorShape,
   });
-  floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(- 1, 0, 0), Math.PI * 0.5);
+  floorBody.position.set(0, -1, 0);
+  floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI * 0.5);
   world.addBody(floorBody);
   floorMesh.position.copy(floorBody.position);
   floorMesh.quaternion.copy(floorBody.quaternion);
 
-  // Create iconsahedron
-  const icosahedron = createIcosahedron();
-  objectsToUpdate.push(icosahedron);
-  scene.add(icosahedron.mesh);
-  world.addBody(icosahedron.body);
-
-  // Create tetrahedron
-  const tetrahedron = createTetrahedron();
-  objectsToUpdate.push(tetrahedron);
-  scene.add(tetrahedron.mesh);
-  world.addBody(tetrahedron.body);
-  
   // Create GUI
   const gui = new GUI();
-  const rollDice = () => {
-    objectsToUpdate.forEach((object) => {
-      world.removeBody(object.body);
-      scene.remove(object.mesh);
-    });
-    objectsToUpdate.splice(0, objectsToUpdate.length);
-
-    const { mesh, body } = createIcosahedron();
-    objectsToUpdate.push({ mesh, body });
-    scene.add(mesh);
-    world.addBody(body);
-  };
+  gui.width = 150;
+  gui.add(params, 'd20Count').name('d20').min(0).step(1);
+  gui.add(params, 'd12Count').name('d12').min(0).step(1);
+  gui.add(params, 'd8Count').name('d8').min(0).step(1);
+  gui.add(params, 'd6Count').name('d6').min(0).step(1);
+  gui.add(params, 'd4Count').name('d4').min(0).step(1);
   gui.add({ 'Roll Dice': rollDice }, 'Roll Dice');
 
   const stats = new Stats();
   stats.showPanel(0);
   document.body.appendChild(stats.dom);
+
+  // Roll dice on page load
+  rollDice();
   
   // Render loop
   function animate() {
