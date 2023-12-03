@@ -1,5 +1,6 @@
-TODO: move files around, organize
-TODO: add stuff to index html file
-TODO: add readme
+# TODOs
+
+TODO: add content to readme
 TODO: fix indentation, add linter
-TODO: fix bezier implementation
+TODO: add fps counter to page corner
+TODO: add env map
