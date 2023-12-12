@@ -87,6 +87,7 @@ function init() {
   composer.addPass(chromaticAberrationPass);
   const bayerDitherPass = new ShaderPass(BayerDitherShader, 'uMap');
   composer.addPass(bayerDitherPass);
+  bayerDitherPass.enabled = false;
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
