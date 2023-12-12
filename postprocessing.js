@@ -4,6 +4,7 @@ import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
+import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 
 import vertexShader from './shaders/vertex.glsl';
 import originalFragmentShader from './shaders/fragment-original.glsl';
@@ -11,6 +12,8 @@ import chromaticAberrationFragmentShader from './shaders/fragment-chromatic-aber
 import bayerFragmentShader from './shaders/fragment-bayer.glsl';
 
 import bgImage from './asset/xp_background.jpg';
+
+// TODO: add custom color option to bayer dither shader?
 
 /* Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638 */
 const getNormalizedBayerMatrix = (n) => {
@@ -74,7 +77,7 @@ function init() {
   window.addEventListener('resize', onWindowResize, false);
 
   // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
+  const renderer = new THREE.WebGLRenderer();
   renderer.setSize(window.innerWidth, window.innerHeight);
   const controls = new OrbitControls(camera, renderer.domElement);
   document.body.appendChild(renderer.domElement);
@@ -88,6 +91,8 @@ function init() {
   const bayerDitherPass = new ShaderPass(BayerDitherShader, 'uMap');
   composer.addPass(bayerDitherPass);
   bayerDitherPass.enabled = false;
+  const smaaPass = new SMAAPass(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio());
+  composer.addPass(smaaPass);
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -122,6 +127,9 @@ function init() {
   const bayerDitherGui = gui.addFolder('Bayer Dithering');
   bayerDitherGui.open();
   bayerDitherGui.add(bayerDitherPass, 'enabled');
+  const smaaGui = gui.addFolder('Anti-aliasing (SMAA)');
+  smaaGui.open();
+  smaaGui.add(smaaPass, 'enabled');
 
   function animate() {
     requestAnimationFrame(animate);
