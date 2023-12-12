@@ -11,6 +11,7 @@ module.exports = {
     dither: './dither.js',
     fractalBranches: './fractal-branches.js',
     dice: './dice.js',
+    postprocessing: './postprocessing.js',
   },
   module: {
     rules: [
@@ -84,6 +85,13 @@ module.exports = {
       template: './template.html',
       chunks: ['dice'],
       filename: './dice.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Postprocessing',
+      template: './template.html',
+      chunks: ['postprocessing'],
+      filename: './postprocessing.html',
     }),
   ],
   output: {

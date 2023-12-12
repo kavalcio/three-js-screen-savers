@@ -8,7 +8,7 @@ uniform int uThresholdMatrixWidth;
 
 void main()
 {
-  vec4 color = texture2D(uMap, vUv);
+  vec4 color = texture(uMap, vUv);
 
   // https://en.wikipedia.org/wiki/Relative_luminance
   float brightness = (0.2126 * color.r + 0.7152 * color.g + 0.0722 * color.b);
