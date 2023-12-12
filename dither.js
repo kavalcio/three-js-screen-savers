@@ -81,14 +81,6 @@ function init() {
   directionalLight.position.z = 1;
   scene.add(directionalLight);
 
-  // Create clock
-  const clock = new THREE.Clock();
-  const tick = () =>
-  {
-    const elapsedTime = clock.getElapsedTime();
-    ditherMaterial.uniforms.uTime.value = elapsedTime;
-  };
-
   // Create material
   const imageTexture = new THREE.TextureLoader().load(bgImage);
   const blueNoiseTexture = new THREE.TextureLoader().load(blueNoiseImage);
@@ -97,7 +89,6 @@ function init() {
     fragmentShader: bayerFragmentShader,
     transparent: true,
     uniforms: {
-      uTime: { value: 0.0 },
       uMap: { type: 't', value: imageTexture },
       uThresholdArray: { value: null },
       uThresholdMatrixWidth: { value: null },
@@ -166,8 +157,6 @@ function init() {
     // Move obj in a circle
     obj2.position.x = 20 * Math.cos(Date.now() * 0.0005);
     obj2.position.y = 20 * Math.sin(Date.now() * 0.0005);
-
-    tick();
 
     renderer.render(scene, camera);
   };

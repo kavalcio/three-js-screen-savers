@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import { GUI } from 'dat.gui';
+import Stats from 'stats.js';
 import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
@@ -9,11 +10,13 @@ import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 import vertexShader from './shaders/vertex.glsl';
 import originalFragmentShader from './shaders/fragment-original.glsl';
 import chromaticAberrationFragmentShader from './shaders/fragment-chromatic-aberration.glsl';
+import filmGrainFragmentShader from './shaders/fragment-film-grain.glsl';
 import bayerFragmentShader from './shaders/fragment-bayer.glsl';
 
 import bgImage from './asset/xp_background.jpg';
 
 // TODO: add custom color option to bayer dither shader?
+// TODO: for film grain, create a different random value for each color channel?
 
 /* Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638 */
 const getNormalizedBayerMatrix = (n) => {
@@ -26,8 +29,7 @@ const getNormalizedBayerMatrix = (n) => {
 const ChromaticAberrationShader = {
   uniforms: {
     uMap: { type: 't' },
-    resolution: { value: new THREE.Vector2(1, 1) },
-    chromaticAberrationOffset: { value: 0.05 },
+    uChromaticAberrationOffset: { value: 0.05 },
   },
   vertexShader,
   fragmentShader: chromaticAberrationFragmentShader,
@@ -42,6 +44,16 @@ const BayerDitherShader = {
   },
   vertexShader,
   fragmentShader: bayerFragmentShader,
+};
+
+const FilmGrainShader = {
+  uniforms: {
+    uMap: { type: 't' },
+    uTime: { value: 0.0 },
+    uIntensity: { value: 0.1 },
+  },
+  vertexShader,
+  fragmentShader: filmGrainFragmentShader,
 };
 
 // const imageTexture = new THREE.TextureLoader().load(bgImage);
@@ -88,11 +100,17 @@ function init() {
   composer.addPass(renderPass);
   const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader, 'uMap');
   composer.addPass(chromaticAberrationPass);
+  const smaaPass = new SMAAPass(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio());
+  composer.addPass(smaaPass);
   const bayerDitherPass = new ShaderPass(BayerDitherShader, 'uMap');
   composer.addPass(bayerDitherPass);
   bayerDitherPass.enabled = false;
-  const smaaPass = new SMAAPass(window.innerWidth * renderer.getPixelRatio(), window.innerHeight * renderer.getPixelRatio());
-  composer.addPass(smaaPass);
+  const filmGrainPass = new ShaderPass(FilmGrainShader, 'uMap');
+  composer.addPass(filmGrainPass);
+  filmGrainPass.enabled = false;
+
+  // add custom AA shader here
+  // const smaaPass = new ShaderPass();
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -118,21 +136,38 @@ function init() {
   // planeMesh.position.y = -30;
   // scene.add(planeMesh);
 
+  // Create clock
+  const clock = new THREE.Clock();
+  const tick = () =>
+  {
+    const elapsedTime = clock.getElapsedTime();
+    // const elapsedTime = Date.now() / 10000 % 1;
+    filmGrainPass.uniforms.uTime.value = elapsedTime;
+  };
+
   // Create GUI
   const gui = new GUI();
   const chromaticAberrationGui = gui.addFolder('Chromatic Aberration');
   chromaticAberrationGui.open();
   chromaticAberrationGui.add(chromaticAberrationPass, 'enabled');
-  chromaticAberrationGui.add(chromaticAberrationPass.uniforms.chromaticAberrationOffset, 'value').name('intensity').min(0).max(0.2);
+  chromaticAberrationGui.add(chromaticAberrationPass.uniforms.uChromaticAberrationOffset, 'value').name('intensity').min(0).max(0.2);
   const bayerDitherGui = gui.addFolder('Bayer Dithering');
   bayerDitherGui.open();
   bayerDitherGui.add(bayerDitherPass, 'enabled');
-  const smaaGui = gui.addFolder('Anti-aliasing (SMAA)');
-  smaaGui.open();
-  smaaGui.add(smaaPass, 'enabled');
+  const filmGrainGui = gui.addFolder('Film Grain');
+  filmGrainGui.open();
+  filmGrainGui.add(filmGrainPass, 'enabled');
+  filmGrainGui.add(filmGrainPass.uniforms.uIntensity, 'value').name('intensity').min(0).max(1);
+
+  const stats = new Stats();
+  stats.showPanel(0);
+  document.body.appendChild(stats.dom);
+
 
   function animate() {
     requestAnimationFrame(animate);
+
+    stats.begin();
 
     // Rotate obj
     obj2.rotation.x -= 0.01;
@@ -142,7 +177,10 @@ function init() {
     obj2.position.x = 20 * Math.cos(Date.now() * 0.0005);
     obj2.position.y = 20 * Math.sin(Date.now() * 0.0005);
 
+    tick();
+
     composer.render(scene, camera);
+    stats.end();
   };
 
   animate();

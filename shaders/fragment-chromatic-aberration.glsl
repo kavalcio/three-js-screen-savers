@@ -3,12 +3,11 @@ precision mediump float;
 
 varying vec2 vUv;
 uniform sampler2D uMap;
-uniform vec2 resolution;
-uniform float chromaticAberrationOffset;
+uniform float uChromaticAberrationOffset;
 
 void main()
 {
-  vec2 offset = chromaticAberrationOffset * (vUv - vec2(0.5));
+  vec2 offset = uChromaticAberrationOffset * (vUv - vec2(0.5));
   float r = texture(uMap, vUv + vec2(offset.x, offset.y)).r;
   float g = texture(uMap, vUv).g;
   float b = texture(uMap, vUv - vec2(offset.x, offset.y)).b;
