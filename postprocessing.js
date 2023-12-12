@@ -17,6 +17,7 @@ import bgImage from './asset/xp_background.jpg';
 
 // TODO: add custom color option to bayer dither shader?
 // TODO: for film grain, create a different random value for each color channel?
+// TODO: add the ability to manually shift shader pass order in gui. is that possible?
 
 /* Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638 */
 const getNormalizedBayerMatrix = (n) => {
