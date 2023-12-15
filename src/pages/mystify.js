@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 
-import { getRandomColor } from '/utils/utils';
-import { initializeScene } from '/pages/template';
+import { getRandomColor } from '/src/utils/utils';
+import { initializeScene } from '/src/pages/template';
 
 // TODO: change color over time
 // TODO: add option to toggle color randomization and option to shift colors over time

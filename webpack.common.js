@@ -3,15 +3,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 
 module.exports = {
   entry: {
-    // index: './index.js',
-    pipes: './pages/pipes.js',
-    mystify: './pages/mystify.js',
-    bezier: './pages/bezier.js',
-    refraction: './pages/refraction.js',
-    dither: './pages/dither.js',
-    fractalBranches: './pages/fractal-branches.js',
-    dice: './pages/dice.js',
-    postprocessing: './pages/postprocessing.js',
+    pipes: './src/pages/pipes.js',
+    mystify: './src/pages/mystify.js',
+    bezier: './src/pages/bezier.js',
+    refraction: './src/pages/refraction.js',
+    dither: './src/pages/dither.js',
+    fractalBranches: './src/pages/fractal-branches.js',
+    dice: './src/pages/dice.js',
+    postprocessing: './src/pages/postprocessing.js',
   },
   module: {
     rules: [

@@ -8,19 +8,19 @@ https://thebookofshaders.com/00/
 
 import * as THREE from 'three';
 
-import vertexShader from '/shaders/vertex.glsl';
-import bayerFragmentShader from '/shaders/fragment-bayer.glsl';
-import blueFragmentShader from '/shaders/fragment-blue.glsl';
-import fixedFragmentShader from '/shaders/fragment-fixed.glsl';
-import randomFragmentShader from '/shaders/fragment-random.glsl';
-import originalFragmentShader from '/shaders/fragment-original.glsl';
-import bgImage from '/assets/xp_background.jpg';
+import vertexShader from '/src/shaders/vertex.glsl';
+import bayerFragmentShader from '/src/shaders/fragment-bayer.glsl';
+import blueFragmentShader from '/src/shaders/fragment-blue.glsl';
+import fixedFragmentShader from '/src/shaders/fragment-fixed.glsl';
+import randomFragmentShader from '/src/shaders/fragment-random.glsl';
+import originalFragmentShader from '/src/shaders/fragment-original.glsl';
+import bgImage from '/src/assets/xp_background.jpg';
 
 /* Blue noise mask downloaded from: http://momentsingraphics.de/BlueNoise.html */
-import blueNoiseImage from '/assets/blue_noise_128_128_1.png';
+import blueNoiseImage from '/src/assets/blue_noise_128_128_1.png';
 
-import { initializeScene } from '/pages/template';
-import { getNormalizedBayerMatrix } from '/utils/utils';
+import { initializeScene } from '/src/pages/template';
+import { getNormalizedBayerMatrix } from '/src/utils/utils';
 
 /* TODOS:
 - Clean up
