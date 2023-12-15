@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { initializeScene } from './template';
+import { initializeScene } from '/pages/template';
 
 const BASE_HEIGHT = 70;
 const BASE_RADIUS = 2;

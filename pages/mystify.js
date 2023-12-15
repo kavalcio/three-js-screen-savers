@@ -1,8 +1,7 @@
 import * as THREE from 'three';
-import { Vector2, Vector3 } from 'three';
 
-import { getRandomColor } from './utils/utils';
-import { initializeScene } from './template';
+import { getRandomColor } from '/utils/utils';
+import { initializeScene } from '/pages/template';
 
 // TODO: change color over time
 // TODO: add option to toggle color randomization and option to shift colors over time
@@ -67,7 +66,7 @@ function init() {
   scene.add(ambientLight);
 
   // Bounding box
-  const boundingBox = new THREE.Box2(new Vector2(-WIDTH / 2, -HEIGHT / 2), new Vector2(WIDTH / 2, HEIGHT / 2));
+  const boundingBox = new THREE.Box2(new THREE.Vector2(-WIDTH / 2, -HEIGHT / 2), new THREE.Vector2(WIDTH / 2, HEIGHT / 2));
   // const boxPlane = new THREE.PlaneGeometry(WIDTH, HEIGHT);
   // const boxEdges = new THREE.EdgesGeometry(boxPlane);
   // const lineMaterial = new THREE.LineBasicMaterial({ color: '#ff0000' });
@@ -80,8 +79,8 @@ function init() {
     const vertices = [];
     for (let i = 0; i < params.vertexCount; i++) {
       vertices.push({
-        position: new Vector2(Math.random() * WIDTH - WIDTH / 2, Math.random() * HEIGHT - HEIGHT / 2),
-        velocity: new Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize(),
+        position: new THREE.Vector2(Math.random() * WIDTH - WIDTH / 2, Math.random() * HEIGHT - HEIGHT / 2),
+        velocity: new THREE.Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize(),
       });
     }
     const material = params.uniformColor ? uniformMaterial : new THREE.LineBasicMaterial({ color: getRandomColor() });
@@ -147,8 +146,8 @@ function init() {
         }
 
         const geometry = new THREE.BufferGeometry().setFromPoints([
-          new Vector3(point1.x, point1.y, 0),
-          new Vector3(point2.x, point2.y, 0),
+          new THREE.Vector3(point1.x, point1.y, 0),
+          new THREE.Vector3(point2.x, point2.y, 0),
         ]);
         const edge = new THREE.Line(geometry, polygon.material);
         edges.push(edge);

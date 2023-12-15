@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { Vector2 } from 'three';
 
-import { getRandomColor } from './utils/utils';
-import { initializeScene } from './template';
+import { getRandomColor } from '/utils/utils';
+import { initializeScene } from '/pages/template';
 
 const INNER_WIDTH = 120;
 const INNER_HEIGHT = 80;

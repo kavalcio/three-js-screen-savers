@@ -4,14 +4,14 @@ const HtmlWebpackPlugin = require('html-webpack-plugin');
 module.exports = {
   entry: {
     // index: './index.js',
-    pipes: './pipes.js',
-    mystify: './mystify.js',
-    bezier: './bezier.js',
-    refraction: './refraction.js',
-    dither: './dither.js',
-    fractalBranches: './fractal-branches.js',
-    dice: './dice.js',
-    postprocessing: './postprocessing.js',
+    pipes: './pages/pipes.js',
+    mystify: './pages/mystify.js',
+    bezier: './pages/bezier.js',
+    refraction: './pages/refraction.js',
+    dither: './pages/dither.js',
+    fractalBranches: './pages/fractal-branches.js',
+    dice: './pages/dice.js',
+    postprocessing: './pages/postprocessing.js',
   },
   module: {
     rules: [
@@ -25,8 +25,8 @@ module.exports = {
       },
       {
         test: /\.glsl$/,
-        use: 'webpack-glsl-loader'
-      }
+        use: 'webpack-glsl-loader',
+      },
     ],
   },
   plugins: [

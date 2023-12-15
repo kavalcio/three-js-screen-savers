@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
-import { initializeScene } from './template';
+import { initializeScene } from '/pages/template';
 
 const MAX_DICE_COUNT = 200;
 const DIE_SCALE = 2;
