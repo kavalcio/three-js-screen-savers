@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { Vector3 } from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui';
 
-import { getRandomColor } from './util';
+import { initializeScene } from './template';
+import { getRandomColor, getRandomInt } from './utils/utils';
 
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
@@ -36,35 +35,19 @@ let paramsToApply = { ...params };
 let pipeList = [];
 
 // TODO: prevent pipe from overlapping itself
-// TODO: add Apply button that applies gui params and deletes all pipes (dont delete other stuff in the scene, or just recreate them after deleting)
-// TODO: randomize starting point of pipes within a smaller bounding box
 function init() {
-  // Create scene
-  const scene = new THREE.Scene();
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(85, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 70;
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
-
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
-
+  camera.fov = 85;
+  camera.updateProjectionMatrix();
+  
   const deletePipe = (pipe) => {
     if (pipe.previous) {
       deletePipe(pipe.previous);
@@ -75,8 +58,6 @@ function init() {
     scene.remove(pipe.mesh);
   };
 
-  // Create GUI
-  const gui = new GUI();
   const resetScene = () => {
     pipeList.forEach((pipe) => {
       deletePipe(pipe);
@@ -85,6 +66,7 @@ function init() {
     params = { ...paramsToApply };
     createPipes();
   };
+
   gui.add(paramsToApply, 'maxPipeLength', 8, 100);
   gui.add(paramsToApply, 'minPipeLength', 1, 7);
   gui.add(paramsToApply, 'buildSpeed', 0, 20);
@@ -100,10 +82,6 @@ function init() {
   directionalLight.position.x = 1;
   directionalLight.position.z = 1;
   scene.add(directionalLight);
-
-  function getRandomInt(min, max) {
-    return Math.floor(Math.random() * (max - min + 1)) + min;
-  }
 
   function createPipe({
     parentMesh = null,
@@ -155,18 +133,20 @@ function init() {
     return newEnd;
   }
 
-  // Initialize several pipes
   const createPipes = () => {
     for (let i = 0; i < params.pipeCount; i++) {
       const start = new Vector3(getRandomInt(-30, 30), getRandomInt(-30, 30), getRandomInt(-30, 30));
       const end = getRandomEndpoint({ directions: DIRECTIONS, oldEnd: start });
       pipeList.push(createPipe({ start, end }));
     }
-  }
+  };
+
+  // Initialize pipes
   createPipes();
 
   function animate() {
     requestAnimationFrame(animate);
+    stats.begin();
 
     pipeList.forEach((pipe, index) => {
       const direction = pipe.end.clone().sub(pipe.start);
@@ -201,8 +181,9 @@ function init() {
       }
     });
 
+    stats.end();
     renderer.render(scene, camera);
-  };
+  }
 
   animate();
 }

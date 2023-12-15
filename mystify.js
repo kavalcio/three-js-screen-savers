@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { Vector2, Vector3 } from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui';
 
-import { getRandomColor } from './util';
+import { getRandomColor } from './utils/utils';
+import { initializeScene } from './template';
 
 // TODO: change color over time
 // TODO: add option to toggle color randomization and option to shift colors over time
@@ -30,34 +29,18 @@ let params = {
 let paramsToApply = { ...params };
 
 function init() {
-  // Create scene
-  const scene = new THREE.Scene();
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 70;
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
+  camera.fov = 65;
+  camera.updateProjectionMatrix();
 
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
-
-  // Create GUI
-  const gui = new GUI();
   const resetScene = () => {
     while (polygons.length) {
       const polygon = polygons.pop();
@@ -115,7 +98,7 @@ function init() {
       polygons.push(createPolygon());
     }
     return polygons;
-  }
+  };
   polygons = createPolygons();
 
   function movePoint(point, velocity) {
@@ -144,6 +127,7 @@ function init() {
 
   function animate() {
     requestAnimationFrame(animate);
+    stats.begin();
 
     polygons.forEach(polygon => {
       // Move vertices
@@ -164,7 +148,7 @@ function init() {
 
         const geometry = new THREE.BufferGeometry().setFromPoints([
           new Vector3(point1.x, point1.y, 0),
-          new Vector3(point2.x, point2.y, 0)
+          new Vector3(point2.x, point2.y, 0),
         ]);
         const edge = new THREE.Line(geometry, polygon.material);
         edges.push(edge);
@@ -179,10 +163,11 @@ function init() {
           scene.remove(edge);
         });
       }
-    })
+    });
 
+    stats.end();
     renderer.render(scene, camera);
-  };
+  }
 
   animate();
 }

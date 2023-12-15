@@ -1,6 +1,6 @@
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui';
+
+import { initializeScene } from './template';
 
 const BASE_HEIGHT = 70;
 const BASE_RADIUS = 2;
@@ -27,33 +27,16 @@ const dynamicParams = {
 const applyParams = () => Object.keys(paramsToApply).forEach(key => params[key] = paramsToApply[key]);
 
 // TODO: change branch color on hover
-// TODO: add ability to right click to remove branch + children
 function init() {
-  // Create scene
-  const scene = new THREE.Scene();
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 10000);
   camera.position.z = 200;
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
-
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -68,7 +51,7 @@ function init() {
   // Initialize tree geometry and material
   let branchGeometry = new THREE.CylinderGeometry(params.baseRadius, params.baseRadius, params.baseHeight, 5);
   const branchMaterial = new THREE.MeshPhongMaterial({ color: 0xbbbbbb });
-  const branchHoverMaterial = new THREE.MeshPhongMaterial({ color: 0xbb2200 })
+  const branchHoverMaterial = new THREE.MeshPhongMaterial({ color: 0xbb2200 });
 
   // Recursive function that creates branches as children of a parent branch
   const createBranch = (parent, depth) => {
@@ -122,7 +105,6 @@ function init() {
   };
 
   // Create GUI
-  const gui = new GUI();
   gui.width = 300;
   const resetScene = () => {
     applyParams();
@@ -192,13 +174,15 @@ function init() {
   // Render loop
   function animate() {
     requestAnimationFrame(animate);
+    stats.begin();
 
     rotateBranch(tree.children[0], dynamicParams.rotationSpeed);
 
     checkBranchHover();
 
+    stats.end();
     renderer.render(scene, camera);
-  };
+  }
 
   animate();
 }

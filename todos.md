@@ -1,6 +1,15 @@
 # TODOs
 
-TODO: add content to readme
-TODO: fix indentation, add linter
-TODO: add fps counter to page corner
-TODO: add env map
+## General
+
+- add content to readme
+- add env map to some scenes
+- finish dice demo
+- use a better physics library for dice demo
+
+## Demo ideas
+
+- image to ASCII converter
+- audio visualizer
+- real refraction demo
+- antialiasing (different algorithms in one demo)

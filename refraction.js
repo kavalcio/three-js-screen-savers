@@ -1,9 +1,7 @@
 import * as THREE from 'three';
-import { Vector2, Vector3 } from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui';
 
 import bgImage from './asset/xp_background.jpg';
+import { initializeScene } from './template';
 
 const DISTANCE = -30;
 
@@ -12,35 +10,20 @@ let params = {
 };
 
 function init() {
-  // Create scene
-  const scene = new THREE.Scene();
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
+
   scene.background = new THREE.Color(0x222222);
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 50;
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
+  camera.fov = 65;
+  camera.updateProjectionMatrix();
 
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
-
-  // Create GUI
-  const gui = new GUI();
   gui.add(params, 'distance', -120, -7);
 
   // Create lights
@@ -59,7 +42,7 @@ function init() {
   });
   // TODO: implement physically accurate refraction?
   // const refractSphereCamera = new THREE.CubeCamera( 0.1, 5000, 512 );
-	// scene.add( refractSphereCamera );
+  // scene.add( refractSphereCamera );
 	// refractSphereCamera.renderTarget.mapping = new THREE.CubeRefractionMapping();
   // const sphereMaterial = new THREE.MeshBasicMaterial({ 
 	// 	color: 0xccccff, 
@@ -80,12 +63,14 @@ function init() {
 
   function animate() {
     requestAnimationFrame(animate);
+    stats.begin();
 
     // Move background
     bgMesh.position.set(0, 0, params.distance);
 
+    stats.end();
     renderer.render(scene, camera);
-  };
+  }
 
   animate();
 }

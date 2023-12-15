@@ -1,9 +1,8 @@
 import * as THREE from 'three';
 import { Vector2 } from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui';
 
-import { getRandomColor } from './util';
+import { getRandomColor } from './utils/utils';
+import { initializeScene } from './template';
 
 const INNER_WIDTH = 120;
 const INNER_HEIGHT = 80;
@@ -27,34 +26,18 @@ let paramsToApply = { ...params };
 
 // TODO: make color cycle over time
 function init() {
-  // Create scene
-  const scene = new THREE.Scene();
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(65, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 110;
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
+  camera.fov = 85;
+  camera.updateProjectionMatrix();
 
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
-
-  // Create GUI
-  const gui = new GUI();
   const resetScene = () => {
     while (bezierCurves.length) {
       const curve = bezierCurves.pop();
@@ -100,9 +83,7 @@ function init() {
   outerBoundsLine.visible = !!params.showGuides;
   scene.add(outerBoundsLine);
 
-  const sphereGeo = new THREE.SphereGeometry(1.5, 5, 5);
-  
-  function movePoint({ position, newPosition, bounds, velocity, sphere, controlLine }) {
+  function movePoint({ position, newPosition, bounds, velocity, sphere }) {
     let newX = newPosition.x;
     let newY = newPosition.y;
 
@@ -129,17 +110,6 @@ function init() {
       sphere.position.x = position.x;
       sphere.position.y = position.y;
     }
-
-    // if (controlLine) {
-    //   const points = [];
-    //   const oldPositions = controlLine.geometry.attributes.position;
-    //   points.push(position);
-    //   points.push(new Vector2(oldPositions.getX(1), oldPositions.getY(1)));
-    //   // console.log(controlLine.geometry.attributes.position.count)
-    //   // console.log(points)
-    //   const edge = new THREE.BufferGeometry().setFromPoints(points);
-    //   controlLine.geometry = edge;
-    // }
   }
 
   const getRandomPoint = (maxWidth, maxHeight) => {
@@ -147,14 +117,6 @@ function init() {
   };
 
   let curveColor = new THREE.Color(getRandomColor());
-
-  const drawRedSphere = (point) => {
-    const sphereMat = new THREE.MeshBasicMaterial({ color: '#ff0000' });
-    const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-    sphere.position.x = point.x;
-    sphere.position.y = point.y;
-    scene.add(sphere);
-  }
 
   const clipSegmentWithinBounds = (p1, p2) => {
     const bounds = outerBounds;
@@ -199,7 +161,7 @@ function init() {
     }
 
     return p2;
-  }
+  };
 
   function createRandomBezierCurves() {
     for (let i = 0; i < params.curveCount; i += 1) {
@@ -238,31 +200,7 @@ function init() {
       }
 
       const pointSpheres = [];
-      const pointControlLines = [];
       const color = curveColor;
-      const sphereMat = new THREE.MeshBasicMaterial({ color: curveColor });
-      controlPoints.forEach((point, index) => {
-
-        if (params.showGuides) {
-          // Draw control points
-          const sphere = new THREE.Mesh(sphereGeo, sphereMat);
-          sphere.position.x = point.x;
-          sphere.position.y = point.y;
-          scene.add(sphere);
-          pointSpheres.push(sphere);
-        }
-
-        // Draw control lines
-        // if (index === 1 || index === 2) {
-        //   const points = [point];
-        //   points.push(index === 1 ? controlPoints[0] : controlPoints[3]);
-        //   const edge = new THREE.BufferGeometry().setFromPoints(points);
-        //   const lmat = new THREE.LineBasicMaterial({ color: '#999999' });
-        //   const line = new THREE.LineSegments(edge, lmat);
-        //   scene.add(line);
-        //   pointControlLines.push(line);
-        // }
-      });
 
       const pointVelocities = [
         new Vector2(Math.random() * 2 - 1, Math.random() * 2 - 1).normalize().multiplyScalar(params.speed * (Math.random() + 1)),
@@ -275,7 +213,6 @@ function init() {
         controlPoints,
         pointVelocities,
         pointSpheres,
-        pointControlLines,
         color,
         echoes: [],
       };
@@ -286,6 +223,7 @@ function init() {
 
   function animate() {
     requestAnimationFrame(animate);
+    stats.begin();
 
     const deltaT = clock.getDelta();
 
@@ -328,7 +266,6 @@ function init() {
           bounds: (pointIndex === 0 || pointIndex === 3) ? innerBounds : outerBounds,
           velocity: curve.pointVelocities[pointIndex],
           sphere: curve.pointSpheres[pointIndex],
-          controlLine: curve.pointControlLines[pointIndex],
         });
       });
 
@@ -347,8 +284,9 @@ function init() {
       }
     });
 
+    stats.end();
     renderer.render(scene, camera);
-  };
+  }
 
   animate();
 }

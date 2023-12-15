@@ -7,8 +7,6 @@ https://thebookofshaders.com/00/
 */
 
 import * as THREE from 'three';
-import { GUI } from 'dat.gui';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
 
 import vertexShader from './shaders/vertex.glsl';
 import bayerFragmentShader from './shaders/fragment-bayer.glsl';
@@ -21,6 +19,9 @@ import bgImage from './asset/xp_background.jpg';
 /* Blue noise mask downloaded from: http://momentsingraphics.de/BlueNoise.html */
 import blueNoiseImage from './asset/blue_noise_128_128_1.png';
 
+import { initializeScene } from './template';
+import { getNormalizedBayerMatrix } from './utils/utils';
+
 /* TODOS:
 - Clean up
 - Add variable dithering algorithm, try to get all the ones in the wikipedia article
@@ -31,46 +32,18 @@ import blueNoiseImage from './asset/blue_noise_128_128_1.png';
 - Add text on screen to show which dithering algorithm is being used
 */
 
-/* Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638 */
-const getNormalizedBayerMatrix = (n) => {
-  let g;
-  let t = n + 1;
-  const matrix = [...Array(1<<t)].map((_,y,a) => a.map(g=(k=t,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
-  return matrix.flat().map(el => el / Math.pow(2, 2 * n + 2));
-};
-
-const createObject = (mat) => {
-  const geo = new THREE.IcosahedronGeometry(10);
-  const obj = new THREE.Mesh(geo, mat);
-  return obj;
-}
-
 function init() {
-  // Create scene
-  const scene = new THREE.Scene();
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
 
-  // Create camera
-  const camera = new THREE.PerspectiveCamera(35, window.innerWidth / window.innerHeight, 0.1, 1000);
   camera.position.z = 100;
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
-
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
+  camera.fov = 35;
+  camera.updateProjectionMatrix();
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -102,19 +75,19 @@ function init() {
     ditherMaterial.uniforms.uThresholdArray.value = getNormalizedBayerMatrix(n);
     ditherMaterial.needsUpdate = true;
   };
-  const applyFixedDither = (n) => {
+  const applyFixedDither = () => {
     ditherMaterial.fragmentShader = fixedFragmentShader;
     ditherMaterial.needsUpdate = true;
   };
-  const applyRandomDither = (n) => {
+  const applyRandomDither = () => {
     ditherMaterial.fragmentShader = randomFragmentShader;
     ditherMaterial.needsUpdate = true;
   };
-  const applyNoDither = (n) => {
+  const applyNoDither = () => {
     ditherMaterial.fragmentShader = originalFragmentShader;
     ditherMaterial.needsUpdate = true;
   };
-  const applyBlueNoise = (n) => {
+  const applyBlueNoise = () => {
     ditherMaterial.fragmentShader = blueFragmentShader;
     ditherMaterial.uniforms.uThresholdMatrixWidth.value = 128;
     ditherMaterial.uniforms.uThresholdTexture.value = blueNoiseTexture;
@@ -124,20 +97,12 @@ function init() {
   // Initialize page to show Bayer dithering
   applyBayerDither(1);
 
-  // Create objects
-  const obj1 = createObject(ditherMaterial);
-  // scene.add(obj1);
-
-  const obj2 = createObject(ditherMaterial);
-  // scene.add(obj2);
-
   const planeGeo = new THREE.PlaneGeometry(100, 60);
   const planeObj = new THREE.Mesh(planeGeo, ditherMaterial);
   scene.add(planeObj);
   // planeObj.position.z = -20;
 
   // Create GUI
-  const gui = new GUI();
   gui.add({ 'Original': () => applyNoDither() }, 'Original');
   gui.add({ 'Fixed threshold': () => applyFixedDither() }, 'Fixed threshold');
   gui.add({ 'Random threshold': () => applyRandomDither() }, 'Random threshold');
@@ -149,17 +114,11 @@ function init() {
 
   function animate() {
     requestAnimationFrame(animate);
+    stats.begin();
 
-    // Rotate obj
-    obj2.rotation.x -= 0.01;
-    obj2.rotation.z += 0.01;
-
-    // Move obj in a circle
-    obj2.position.x = 20 * Math.cos(Date.now() * 0.0005);
-    obj2.position.y = 20 * Math.sin(Date.now() * 0.0005);
-
+    stats.end();
     renderer.render(scene, camera);
-  };
+  }
 
   animate();
 }

@@ -1,9 +1,8 @@
 import * as THREE from 'three';
-import { OrbitControls } from "three/examples/jsm/controls/OrbitControls";
-import { GUI } from 'dat.gui';
-import * as CANNON from 'cannon-es'
-import Stats from 'stats.js';
+import * as CANNON from 'cannon-es';
 import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
+
+import { initializeScene } from './template';
 
 const MAX_DICE_COUNT = 200;
 const DIE_SCALE = 2;
@@ -22,7 +21,6 @@ let params = {
   'd20Count': 1,
 };
 
-let scene;
 let world;
 const objectsToUpdate = [];
 
@@ -34,128 +32,23 @@ const tetrahedronGeometry = new THREE.TetrahedronGeometry(DIE_SCALE, 0);
 
 const material = new THREE.MeshNormalMaterial({ color: 0x00ff00 });
 
-const getPolyhedronShape = (mesh) => {
-  let geometry = new THREE.BufferGeometry();
-  geometry.setAttribute('position', mesh.geometry.getAttribute('position'));
-
-  geometry = BufferGeometryUtils.mergeVertices(geometry);
-
-  const position = geometry.attributes.position.array;
-  const index = geometry.index.array;
-
-  const points = [];
-  for (let i = 0; i < position.length; i += 3) {
-    points.push(new CANNON.Vec3(position[i], position[i + 1], position[i + 2]));
-  }
-  const faces = [];
-  for (let i = 0; i < index.length; i += 3) {
-    faces.push([index[i], index[i + 1], index[i + 2]]);
-  }
-
-  return new CANNON.ConvexPolyhedron({ vertices: points, faces });
-};
-
-const createDie = ({ geometry }) => {
-  const mesh = new THREE.Mesh(geometry, material);
-
-  const shape = getPolyhedronShape(mesh);
-  const body = new CANNON.Body({
-    mass: 1,
-    shape,
-    position: new CANNON.Vec3((Math.random() - 0.5) * DIE_SCALE * 10, (Math.random() * 6 + 8) * DIE_SCALE, (Math.random() - 0.5) * DIE_SCALE * 10),
-    quaternion: new CANNON.Quaternion((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2),
-    velocity: new CANNON.Vec3((Math.random() - 0.5) * DIE_SCALE * 8, -Math.random() * DIE_SCALE, (Math.random() - 0.5) * DIE_SCALE * 8),
-    angularVelocity: new CANNON.Vec3(Math.random() * 5, Math.random() * 5, Math.random() * 5),
-    sleepSpeedLimit: 1.0,
-    sleepTimeLimit: 1.0,
-  });
-
-  return { mesh, body };
-};
-
-const rollDice = () => {
-  // Return early if there are too many dice
-  if (params.d20Count + params.d12Count + params.d8Count + params.d6Count + params.d4Count > MAX_DICE_COUNT) {
-    alert(`You can't roll more than ${MAX_DICE_COUNT} dice at once!`);
-    return;
-  }
-
-  objectsToUpdate.forEach((object) => {
-    world.removeBody(object.body);
-    scene.remove(object.mesh);
-  });
-  objectsToUpdate.splice(0, objectsToUpdate.length);
-
-  // Create param.d20Count icosahedrons
-  for (let i = 0; i < params.d20Count; i++) {
-    const { mesh, body } = createDie({ geometry: icosahedronGeometry });
-    objectsToUpdate.push({ mesh, body });
-    scene.add(mesh);
-    world.addBody(body);
-  }
-  // Create param.d12Count dodecahedrons
-  for (let i = 0; i < params.d12Count; i++) {
-    const { mesh, body } = createDie({ geometry: dodecahedronGeometry });
-    objectsToUpdate.push({ mesh, body });
-    scene.add(mesh);
-    world.addBody(body);
-  }
-  // Create param.d8Count octahedrons
-  for (let i = 0; i < params.d8Count; i++) {
-    const { mesh, body } = createDie({ geometry: octahedronGeometry });
-    objectsToUpdate.push({ mesh, body });
-    scene.add(mesh);
-    world.addBody(body);
-  }
-  // Create param.d6Count cubes
-  for (let i = 0; i < params.d6Count; i++) {
-    const { mesh, body } = createDie({ geometry: boxGeometry });
-    objectsToUpdate.push({ mesh, body });
-    scene.add(mesh);
-    world.addBody(body);
-  }
-  // Create param.d4Count tetrahedrons
-  for (let i = 0; i < params.d4Count; i++) {
-    const { mesh, body } = createDie({ geometry: tetrahedronGeometry });
-    objectsToUpdate.push({ mesh, body });
-    scene.add(mesh);
-    world.addBody(body);
-  }
-};
-
 function init() {
+  const {
+    scene,
+    renderer,
+    camera,
+    gui,
+    stats,
+  } = initializeScene();
+
   // Create clock
   const clock = new THREE.Clock();
 
-  // Create scene
-  scene = new THREE.Scene();
-
-  // const axesHelper = new THREE.AxesHelper( 5 );
-  // scene.add( axesHelper );
-
   // Create camera
-  const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 10000);
   camera.position.set(28, 25, 43);
+  camera.fov = 45;
+  camera.updateProjectionMatrix();
   camera.lookAt(scene.position);
-  const tanFOV = Math.tan(((Math.PI / 180) * camera.fov / 2));
-  const initialWindowHeight = window.innerHeight;
-
-  function onWindowResize(event) {
-    // Adjust camera and renderer on window resize
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.fov = (360 / Math.PI) * Math.atan(tanFOV * ( window.innerHeight / initialWindowHeight));
-    camera.updateProjectionMatrix();
-    camera.lookAt(scene.position);
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.render(scene, camera);
-  }
-  window.addEventListener('resize', onWindowResize, false);
-
-  // Create renderer
-  const renderer = new THREE.WebGLRenderer({ antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  const controls = new OrbitControls(camera, renderer.domElement);
-  document.body.appendChild(renderer.domElement);
 
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
@@ -171,7 +64,6 @@ function init() {
 
   // Create physics world
   world = new CANNON.World();
-  // world.gravity.set(0, - 9.82, 0);
   world.gravity.set(0, - 98.1, 0);
   world.allowSleep = true;
 
@@ -205,8 +97,96 @@ function init() {
   floorMesh.position.copy(floorBody.position);
   floorMesh.quaternion.copy(floorBody.quaternion);
 
+  const getPolyhedronShape = (mesh) => {
+    let geometry = new THREE.BufferGeometry();
+    geometry.setAttribute('position', mesh.geometry.getAttribute('position'));
+  
+    geometry = BufferGeometryUtils.mergeVertices(geometry);
+  
+    const position = geometry.attributes.position.array;
+    const index = geometry.index.array;
+  
+    const points = [];
+    for (let i = 0; i < position.length; i += 3) {
+      points.push(new CANNON.Vec3(position[i], position[i + 1], position[i + 2]));
+    }
+    const faces = [];
+    for (let i = 0; i < index.length; i += 3) {
+      faces.push([index[i], index[i + 1], index[i + 2]]);
+    }
+  
+    return new CANNON.ConvexPolyhedron({ vertices: points, faces });
+  };
+  
+  const createDie = ({ geometry }) => {
+    const mesh = new THREE.Mesh(geometry, material);
+  
+    const shape = getPolyhedronShape(mesh);
+    const body = new CANNON.Body({
+      mass: 1,
+      shape,
+      position: new CANNON.Vec3((Math.random() - 0.5) * DIE_SCALE * 10, (Math.random() * 6 + 8) * DIE_SCALE, (Math.random() - 0.5) * DIE_SCALE * 10),
+      quaternion: new CANNON.Quaternion((Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2, (Math.random() - 0.5) * 2),
+      velocity: new CANNON.Vec3((Math.random() - 0.5) * DIE_SCALE * 8, -Math.random() * DIE_SCALE, (Math.random() - 0.5) * DIE_SCALE * 8),
+      angularVelocity: new CANNON.Vec3(Math.random() * 5, Math.random() * 5, Math.random() * 5),
+      sleepSpeedLimit: 1.0,
+      sleepTimeLimit: 1.0,
+    });
+  
+    return { mesh, body };
+  };
+  
+  const rollDice = () => {
+    // Return early if there are too many dice
+    if (params.d20Count + params.d12Count + params.d8Count + params.d6Count + params.d4Count > MAX_DICE_COUNT) {
+      alert(`You can't roll more than ${MAX_DICE_COUNT} dice at once!`);
+      return;
+    }
+  
+    objectsToUpdate.forEach((object) => {
+      world.removeBody(object.body);
+      scene.remove(object.mesh);
+    });
+    objectsToUpdate.splice(0, objectsToUpdate.length);
+  
+    // Create param.d20Count icosahedrons
+    for (let i = 0; i < params.d20Count; i++) {
+      const { mesh, body } = createDie({ geometry: icosahedronGeometry });
+      objectsToUpdate.push({ mesh, body });
+      scene.add(mesh);
+      world.addBody(body);
+    }
+    // Create param.d12Count dodecahedrons
+    for (let i = 0; i < params.d12Count; i++) {
+      const { mesh, body } = createDie({ geometry: dodecahedronGeometry });
+      objectsToUpdate.push({ mesh, body });
+      scene.add(mesh);
+      world.addBody(body);
+    }
+    // Create param.d8Count octahedrons
+    for (let i = 0; i < params.d8Count; i++) {
+      const { mesh, body } = createDie({ geometry: octahedronGeometry });
+      objectsToUpdate.push({ mesh, body });
+      scene.add(mesh);
+      world.addBody(body);
+    }
+    // Create param.d6Count cubes
+    for (let i = 0; i < params.d6Count; i++) {
+      const { mesh, body } = createDie({ geometry: boxGeometry });
+      objectsToUpdate.push({ mesh, body });
+      scene.add(mesh);
+      world.addBody(body);
+    }
+    // Create param.d4Count tetrahedrons
+    for (let i = 0; i < params.d4Count; i++) {
+      const { mesh, body } = createDie({ geometry: tetrahedronGeometry });
+      objectsToUpdate.push({ mesh, body });
+      scene.add(mesh);
+      world.addBody(body);
+    }
+  };
+
   // Create GUI
-  const gui = new GUI();
   gui.width = 150;
   gui.add(params, 'd20Count').name('d20').min(0).step(1);
   gui.add(params, 'd12Count').name('d12').min(0).step(1);
@@ -215,17 +195,12 @@ function init() {
   gui.add(params, 'd4Count').name('d4').min(0).step(1);
   gui.add({ 'Roll Dice': rollDice }, 'Roll Dice');
 
-  const stats = new Stats();
-  stats.showPanel(0);
-  document.body.appendChild(stats.dom);
-
   // Roll dice on page load
   rollDice();
   
   // Render loop
   function animate() {
     requestAnimationFrame(animate);
-
     stats.begin();
 
     // Update physics world
@@ -239,9 +214,8 @@ function init() {
     });
 
     renderer.render(scene, camera);
-
     stats.end();
-  };
+  }
 
   animate();
 }
