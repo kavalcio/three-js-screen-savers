@@ -11,6 +11,7 @@ module.exports = {
     fractalBranches: './src/pages/fractal-branches.js',
     dice: './src/pages/dice.js',
     postprocessing: './src/pages/postprocessing.js',
+    textureLayers: './src/pages/texture-layers.js',
   },
   module: {
     rules: [
@@ -91,6 +92,13 @@ module.exports = {
       template: './template.html',
       chunks: ['postprocessing'],
       filename: './postprocessing.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Texture Layers',
+      template: './template.html',
+      chunks: ['textureLayers'],
+      filename: './texture-layers.html',
     }),
   ],
   output: {
