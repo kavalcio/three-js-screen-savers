@@ -128,7 +128,6 @@ function init() {
 
   function animate() {
     requestAnimationFrame(animate);
-
     stats.begin();
 
     // Rotate obj
@@ -141,8 +140,8 @@ function init() {
 
     tick();
 
-    composer.render(scene, camera);
     stats.end();
+    composer.render(scene, camera);
   }
 
   animate();

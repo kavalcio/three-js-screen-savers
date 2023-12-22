@@ -213,8 +213,8 @@ function init() {
       object.mesh.quaternion.copy(object.body.quaternion);
     });
 
-    renderer.render(scene, camera);
     stats.end();
+    renderer.render(scene, camera);
   }
 
   animate();
