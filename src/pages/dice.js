@@ -6,6 +6,7 @@ import { initializeScene } from '/src/pages/template';
 
 const MAX_DICE_COUNT = 200;
 const DIE_SCALE = 2;
+const SHADOW_MAP_SIZE = 35;
 
 // TODO: add walls
 // TODO: add dice textures
@@ -30,7 +31,8 @@ const octahedronGeometry = new THREE.OctahedronGeometry(DIE_SCALE, 0);
 const boxGeometry = new THREE.BoxGeometry(DIE_SCALE, DIE_SCALE, DIE_SCALE);
 const tetrahedronGeometry = new THREE.TetrahedronGeometry(DIE_SCALE, 0);
 
-const material = new THREE.MeshNormalMaterial({ color: 0x00ff00 });
+const material = new THREE.MeshNormalMaterial();
+// const material = new THREE.MeshStandardMaterial({ color: 0xccaa55 });
 
 function init() {
   const {
@@ -40,6 +42,9 @@ function init() {
     gui,
     stats,
   } = initializeScene();
+
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
   // Create clock
   const clock = new THREE.Clock();
@@ -53,11 +58,23 @@ function init() {
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
   scene.add(ambientLight);
-  const directionalLight = new THREE.DirectionalLight(0xdddddd, 0.5);
-  directionalLight.position.set(-10, 10, -10);
+
+  const directionalLight = new THREE.DirectionalLight(0xdddddd, 0.6);
+  directionalLight.position.set(-15, 30, -15);
   directionalLight.lookAt(scene.position);
+  directionalLight.castShadow = true;
+  directionalLight.shadow.camera.top = SHADOW_MAP_SIZE;
+  directionalLight.shadow.camera.bottom = -SHADOW_MAP_SIZE;
+  directionalLight.shadow.camera.left = -SHADOW_MAP_SIZE;
+  directionalLight.shadow.camera.right = SHADOW_MAP_SIZE;
+  directionalLight.shadow.camera.far = 70;
+  directionalLight.shadow.mapSize.set(2048, 2048);
   scene.add(directionalLight);
-  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 0.4);
+
+  // const shadowHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+  // scene.add(shadowHelper);
+
+  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 0.2);
   directionalLight2.position.set(10, 5, 10);
   directionalLight2.lookAt(scene.position);
   scene.add(directionalLight2);
@@ -82,9 +99,10 @@ function init() {
 
   // Create floor
   const floorMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(10, 10),
+    new THREE.PlaneGeometry(50, 50),
     new THREE.MeshPhongMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide }),
   );
+  floorMesh.receiveShadow = true;
   scene.add(floorMesh);
   const floorShape = new CANNON.Plane();
   const floorBody = new CANNON.Body({
@@ -120,6 +138,8 @@ function init() {
   
   const createDie = ({ geometry }) => {
     const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
   
     const shape = getPolyhedronShape(mesh);
     const body = new CANNON.Body({
