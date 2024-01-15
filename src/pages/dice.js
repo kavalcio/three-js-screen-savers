@@ -6,11 +6,10 @@ import { initializeScene } from '/src/pages/template';
 
 const MAX_DICE_COUNT = 200;
 const DIE_SCALE = 2;
-const SHADOW_MAP_SIZE = 35;
+const PLATFORM_SIZE = 35;
+const WALL_HEIGHT = 3;
 
-// TODO: add walls
 // TODO: add dice textures
-// TODO: add shadows
 // TODO: add sounds
 // TODO: add up numbers on the upper face of each die after a roll
 
@@ -31,8 +30,8 @@ const octahedronGeometry = new THREE.OctahedronGeometry(DIE_SCALE, 0);
 const boxGeometry = new THREE.BoxGeometry(DIE_SCALE, DIE_SCALE, DIE_SCALE);
 const tetrahedronGeometry = new THREE.TetrahedronGeometry(DIE_SCALE, 0);
 
-const material = new THREE.MeshNormalMaterial();
-// const material = new THREE.MeshStandardMaterial({ color: 0xccaa55 });
+// const material = new THREE.MeshNormalMaterial();
+const material = new THREE.MeshStandardMaterial({ color: 0xccaa55 });
 
 function init() {
   const {
@@ -50,8 +49,8 @@ function init() {
   const clock = new THREE.Clock();
 
   // Create camera
-  camera.position.set(28, 25, 43);
-  camera.fov = 45;
+  camera.position.set(45, 80, 55);
+  camera.fov = 20;
   camera.updateProjectionMatrix();
   camera.lookAt(scene.position);
 
@@ -60,19 +59,19 @@ function init() {
   scene.add(ambientLight);
 
   const directionalLight = new THREE.DirectionalLight(0xdddddd, 0.6);
-  directionalLight.position.set(-15, 30, -15);
+  directionalLight.position.set(-5, 30, 20);
   directionalLight.lookAt(scene.position);
   directionalLight.castShadow = true;
-  directionalLight.shadow.camera.top = SHADOW_MAP_SIZE;
-  directionalLight.shadow.camera.bottom = -SHADOW_MAP_SIZE;
-  directionalLight.shadow.camera.left = -SHADOW_MAP_SIZE;
-  directionalLight.shadow.camera.right = SHADOW_MAP_SIZE;
+  directionalLight.shadow.camera.top = PLATFORM_SIZE;
+  directionalLight.shadow.camera.bottom = -PLATFORM_SIZE;
+  directionalLight.shadow.camera.left = -PLATFORM_SIZE;
+  directionalLight.shadow.camera.right = PLATFORM_SIZE;
   directionalLight.shadow.camera.far = 70;
   directionalLight.shadow.mapSize.set(2048, 2048);
   scene.add(directionalLight);
 
-  // const shadowHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
-  // scene.add(shadowHelper);
+  const shadowHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
+  scene.add(shadowHelper);
 
   const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 0.2);
   directionalLight2.position.set(10, 5, 10);
@@ -98,9 +97,10 @@ function init() {
   world.defaultContactMaterial = defaultContactMaterial;
 
   // Create floor
+  const surfaceMaterial = new THREE.MeshStandardMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide });
   const floorMesh = new THREE.Mesh(
-    new THREE.PlaneGeometry(50, 50),
-    new THREE.MeshPhongMaterial({ color: 0xaaaaaa, side: THREE.DoubleSide }),
+    new THREE.PlaneGeometry(PLATFORM_SIZE, PLATFORM_SIZE),
+    surfaceMaterial,
   );
   floorMesh.receiveShadow = true;
   scene.add(floorMesh);
@@ -109,11 +109,35 @@ function init() {
     mass: 0,
     shape: floorShape,
   });
-  floorBody.position.set(0, -1, 0);
+  floorBody.position.set(0, 0, 0);
   floorBody.quaternion.setFromAxisAngle(new CANNON.Vec3(-1, 0, 0), Math.PI * 0.5);
   world.addBody(floorBody);
   floorMesh.position.copy(floorBody.position);
   floorMesh.quaternion.copy(floorBody.quaternion);
+
+  // Create walls
+  const wallGeometry = new THREE.PlaneGeometry(PLATFORM_SIZE, WALL_HEIGHT);
+  const createWall = ({ x, z, rotation }) => {
+    const wallMesh = new THREE.Mesh(wallGeometry, surfaceMaterial);
+    wallMesh.receiveShadow = true;
+    scene.add(wallMesh);
+
+    const wallShape = new CANNON.Plane();
+    const wallBody = new CANNON.Body({
+      mass: 0,
+      shape: wallShape,
+    });
+    wallBody.position.set(x, WALL_HEIGHT / 2, z);
+    wallBody.quaternion.setFromAxisAngle(new CANNON.Vec3(0, 1, 0), rotation);
+    world.addBody(wallBody);
+    wallMesh.position.copy(wallBody.position);
+    wallMesh.quaternion.copy(wallBody.quaternion);
+  };
+
+  createWall({ x: PLATFORM_SIZE / 2, z: 0, rotation: -Math.PI * 0.5 });
+  createWall({ x: -PLATFORM_SIZE / 2, z: 0, rotation: Math.PI * 0.5 });
+  createWall({ x: 0, z: PLATFORM_SIZE / 2, rotation: Math.PI });
+  createWall({ x: 0, z: -PLATFORM_SIZE / 2, rotation: 0 });
 
   const getPolyhedronShape = (mesh) => {
     let geometry = new THREE.BufferGeometry();
