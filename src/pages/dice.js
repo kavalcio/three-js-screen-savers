@@ -4,25 +4,41 @@ import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js'
 
 import { initializeScene } from '/src/pages/template';
 
+const DIE_TYPES = {
+  D4: 'D4',
+  D6: 'D6',
+  D8: 'D8',
+  D12: 'D12',
+  D20: 'D20',
+};
+
 const MAX_DICE_COUNT = 200;
-const DIE_SCALE = 2;
+const DIE_SCALE = 1;
 const PLATFORM_SIZE = 35;
 const WALL_HEIGHT = 3;
 
 // TODO: add dice textures
 // TODO: add sounds
 // TODO: add up numbers on the upper face of each die after a roll
+// get normals of each face, dot product with -y vector, pick largest
 
 let params = {
-  'd4Count': 2,
+  'd4Count': 1,
   'd6Count': 0,
-  'd8Count': 0,
+  'd8Count': 1,
   'd12Count': 0,
-  'd20Count': 1,
+  'd20Count': 0,
 };
 
 let world;
 const objectsToUpdate = [];
+
+const OBJECT_TEMPLATE = {
+  mesh: null,
+  body: null,
+  normals: [],
+  normalHelpers: [],
+};
 
 const icosahedronGeometry = new THREE.IcosahedronGeometry(DIE_SCALE, 0);
 const dodecahedronGeometry = new THREE.DodecahedronGeometry(DIE_SCALE, 0);
@@ -31,7 +47,7 @@ const boxGeometry = new THREE.BoxGeometry(DIE_SCALE, DIE_SCALE, DIE_SCALE);
 const tetrahedronGeometry = new THREE.TetrahedronGeometry(DIE_SCALE, 0);
 
 // const material = new THREE.MeshNormalMaterial();
-const material = new THREE.MeshStandardMaterial({ color: 0xccaa55 });
+const material = new THREE.MeshStandardMaterial({ color: 0xccaa55, wireframe: true });
 
 function init() {
   const {
@@ -80,7 +96,8 @@ function init() {
 
   // Create physics world
   world = new CANNON.World();
-  world.gravity.set(0, - 98.1, 0);
+  world.gravity.set(0, -98.1, 0);
+  // world.gravity.set(0, 0, 0);
   world.allowSleep = true;
 
   // Create contact material
@@ -196,37 +213,79 @@ function init() {
     // Create param.d20Count icosahedrons
     for (let i = 0; i < params.d20Count; i++) {
       const { mesh, body } = createDie({ geometry: icosahedronGeometry });
-      objectsToUpdate.push({ mesh, body });
+      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d12Count dodecahedrons
     for (let i = 0; i < params.d12Count; i++) {
       const { mesh, body } = createDie({ geometry: dodecahedronGeometry });
-      objectsToUpdate.push({ mesh, body });
+      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d8Count octahedrons
     for (let i = 0; i < params.d8Count; i++) {
       const { mesh, body } = createDie({ geometry: octahedronGeometry });
-      objectsToUpdate.push({ mesh, body });
+      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d6Count cubes
     for (let i = 0; i < params.d6Count; i++) {
       const { mesh, body } = createDie({ geometry: boxGeometry });
-      objectsToUpdate.push({ mesh, body });
+      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d4Count tetrahedrons
     for (let i = 0; i < params.d4Count; i++) {
       const { mesh, body } = createDie({ geometry: tetrahedronGeometry });
-      objectsToUpdate.push({ mesh, body });
+      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
       scene.add(mesh);
       world.addBody(body);
+    }
+  };
+  
+  const updateFaceNormals = (object) => {
+    const tri = new THREE.Triangle();
+    const faceCenter = new THREE.Vector3();
+    const normalVector = new THREE.Vector3();
+    const normalMatrix = new THREE.Matrix3();
+
+    normalMatrix.getNormalMatrix(object.mesh.matrixWorld);
+    const vertexCoords = object.mesh.geometry.attributes.position.array;
+    
+    for (let i = 0; i < vertexCoords.length / 9; i++) {
+      tri.set(
+        new THREE.Vector3(vertexCoords[i * 9], vertexCoords[i * 9 + 1], vertexCoords[i * 9 + 2]),
+        new THREE.Vector3(vertexCoords[i * 9 + 3], vertexCoords[i * 9 + 4], vertexCoords[i * 9 + 5]),
+        new THREE.Vector3(vertexCoords[i * 9 + 6], vertexCoords[i * 9 + 7], vertexCoords[i * 9 + 8]),
+      );
+      tri.getNormal(normalVector);
+
+      normalVector.applyMatrix3(normalMatrix).normalize();
+
+      // Draw the normal at the center of the face
+      faceCenter.addVectors(tri.a, tri.b);
+      faceCenter.add(tri.c);
+      faceCenter.divideScalar(3);
+
+      // Convert center from local space to world space
+      object.mesh.localToWorld(faceCenter);
+
+      if (object.normalHelpers[i]) {
+        object.normalHelpers[i].position.copy(faceCenter);
+        object.normalHelpers[i].setDirection(normalVector);
+      } else {
+        const normalHelper = new THREE.ArrowHelper(normalVector, faceCenter, 2, 0x00ff00);
+        scene.add(normalHelper);
+        object.normalHelpers[i] = normalHelper;
+      }
+
+      // TODO: the normals behave weirdly when there are multiple objects
+
+      object.normals[i] = normalVector.clone();
     }
   };
 
@@ -255,7 +314,12 @@ function init() {
     objectsToUpdate.forEach((object) => {
       object.mesh.position.copy(object.body.position);
       object.mesh.quaternion.copy(object.body.quaternion);
+
+      updateFaceNormals(object);
+
+      // TODO: pick normal pointing down, color it red
     });
+    console.log(objectsToUpdate)
 
     stats.end();
     renderer.render(scene, camera);
