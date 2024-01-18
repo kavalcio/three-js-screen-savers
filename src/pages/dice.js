@@ -21,24 +21,25 @@ const WALL_HEIGHT = 3;
 // TODO: add sounds
 // TODO: add up numbers on the upper face of each die after a roll
 // get normals of each face, dot product with -y vector, pick largest
+// TODO: add d10
 
 let params = {
   'd4Count': 1,
   'd6Count': 0,
-  'd8Count': 1,
-  'd12Count': 0,
+  'd8Count':0,
+  'd12Count': 1,
   'd20Count': 0,
 };
 
 let world;
 const objectsToUpdate = [];
 
-const OBJECT_TEMPLATE = {
+const createObjectTemplate = () => ({
   mesh: null,
   body: null,
   normals: [],
   normalHelpers: [],
-};
+});
 
 const icosahedronGeometry = new THREE.IcosahedronGeometry(DIE_SCALE, 0);
 const dodecahedronGeometry = new THREE.DodecahedronGeometry(DIE_SCALE, 0);
@@ -205,6 +206,7 @@ function init() {
     }
   
     objectsToUpdate.forEach((object) => {
+      object.normalHelpers.forEach((normalHelper) => scene.remove(normalHelper));
       world.removeBody(object.body);
       scene.remove(object.mesh);
     });
@@ -213,35 +215,35 @@ function init() {
     // Create param.d20Count icosahedrons
     for (let i = 0; i < params.d20Count; i++) {
       const { mesh, body } = createDie({ geometry: icosahedronGeometry });
-      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
+      objectsToUpdate.push({ ...createObjectTemplate(), mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d12Count dodecahedrons
     for (let i = 0; i < params.d12Count; i++) {
       const { mesh, body } = createDie({ geometry: dodecahedronGeometry });
-      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
+      objectsToUpdate.push({ ...createObjectTemplate(), mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d8Count octahedrons
     for (let i = 0; i < params.d8Count; i++) {
       const { mesh, body } = createDie({ geometry: octahedronGeometry });
-      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
+      objectsToUpdate.push({ ...createObjectTemplate(), mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d6Count cubes
     for (let i = 0; i < params.d6Count; i++) {
       const { mesh, body } = createDie({ geometry: boxGeometry });
-      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
+      objectsToUpdate.push({ ...createObjectTemplate(), mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
     // Create param.d4Count tetrahedrons
     for (let i = 0; i < params.d4Count; i++) {
       const { mesh, body } = createDie({ geometry: tetrahedronGeometry });
-      objectsToUpdate.push({ ...OBJECT_TEMPLATE, mesh, body });
+      objectsToUpdate.push({ ...createObjectTemplate(), mesh, body });
       scene.add(mesh);
       world.addBody(body);
     }
@@ -255,6 +257,7 @@ function init() {
 
     normalMatrix.getNormalMatrix(object.mesh.matrixWorld);
     const vertexCoords = object.mesh.geometry.attributes.position.array;
+    console.log('vertexCoords', vertexCoords.length)
     
     for (let i = 0; i < vertexCoords.length / 9; i++) {
       tri.set(
@@ -283,9 +286,11 @@ function init() {
         object.normalHelpers[i] = normalHelper;
       }
 
-      // TODO: the normals behave weirdly when there are multiple objects
-
-      object.normals[i] = normalVector.clone();
+      if (object.normals[i]) {
+        object.normals[i].copy(normalVector);
+      } else {
+        object.normals[i] = normalVector.clone();
+      }
     }
   };
 
@@ -319,7 +324,6 @@ function init() {
 
       // TODO: pick normal pointing down, color it red
     });
-    console.log(objectsToUpdate)
 
     stats.end();
     renderer.render(scene, camera);
