@@ -13,7 +13,7 @@ import bayerFragmentShader from '/src/shaders/fragment-bayer.glsl';
 
 import bgImage from '/src/assets/xp_background.jpg';
 
-import { getNormalizedBayerMatrix } from '/src/utils/utils';
+import { getNormalizedBayerMatrix } from '/src/utils/general';
 import { initializeScene } from '/src/pages/template';
 
 // TODO: add custom color option to bayer dither shader?

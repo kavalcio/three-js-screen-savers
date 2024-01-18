@@ -20,7 +20,7 @@ import bgImage from '/src/assets/xp_background.jpg';
 import blueNoiseImage from '/src/assets/blue_noise_128_128_1.png';
 
 import { initializeScene } from '/src/pages/template';
-import { getNormalizedBayerMatrix } from '/src/utils/utils';
+import { getNormalizedBayerMatrix } from '/src/utils/general';
 
 /* TODOS:
 - Clean up

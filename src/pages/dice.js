@@ -1,8 +1,9 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
-import * as BufferGeometryUtils from 'three/addons/utils/BufferGeometryUtils.js';
 
 import { initializeScene } from '/src/pages/template';
+import { getPolyhedronShape, updateFaceNormals } from '/src/utils/dice';
+import { findDownFacingNormalIndex } from '/src/utils/dice';
 
 const DIE_TYPES = {
   D4: 'D4',
@@ -12,7 +13,7 @@ const DIE_TYPES = {
   D20: 'D20',
 };
 
-const MAX_DICE_COUNT = 200;
+const MAX_DICE_COUNT = 100;
 const DIE_SCALE = 1;
 const PLATFORM_SIZE = 35;
 const WALL_HEIGHT = 3;
@@ -20,8 +21,9 @@ const WALL_HEIGHT = 3;
 // TODO: add dice textures
 // TODO: add sounds
 // TODO: add up numbers on the upper face of each die after a roll
-// get normals of each face, dot product with -y vector, pick largest
 // TODO: add d10
+// TODO: normals not working for cubes, probably because it's an indexed geometry
+// TODO: each polygon triangle has its own normal. merge these for faces
 
 let params = {
   'd4Count': 1,
@@ -157,27 +159,6 @@ function init() {
   createWall({ x: 0, z: PLATFORM_SIZE / 2, rotation: Math.PI });
   createWall({ x: 0, z: -PLATFORM_SIZE / 2, rotation: 0 });
 
-  const getPolyhedronShape = (mesh) => {
-    let geometry = new THREE.BufferGeometry();
-    geometry.setAttribute('position', mesh.geometry.getAttribute('position'));
-  
-    geometry = BufferGeometryUtils.mergeVertices(geometry);
-  
-    const position = geometry.attributes.position.array;
-    const index = geometry.index.array;
-  
-    const points = [];
-    for (let i = 0; i < position.length; i += 3) {
-      points.push(new CANNON.Vec3(position[i], position[i + 1], position[i + 2]));
-    }
-    const faces = [];
-    for (let i = 0; i < index.length; i += 3) {
-      faces.push([index[i], index[i + 1], index[i + 2]]);
-    }
-  
-    return new CANNON.ConvexPolyhedron({ vertices: points, faces });
-  };
-  
   const createDie = ({ geometry }) => {
     const mesh = new THREE.Mesh(geometry, material);
     mesh.castShadow = true;
@@ -249,51 +230,6 @@ function init() {
     }
   };
   
-  const updateFaceNormals = (object) => {
-    const tri = new THREE.Triangle();
-    const faceCenter = new THREE.Vector3();
-    const normalVector = new THREE.Vector3();
-    const normalMatrix = new THREE.Matrix3();
-
-    normalMatrix.getNormalMatrix(object.mesh.matrixWorld);
-    const vertexCoords = object.mesh.geometry.attributes.position.array;
-    console.log('vertexCoords', vertexCoords.length)
-    
-    for (let i = 0; i < vertexCoords.length / 9; i++) {
-      tri.set(
-        new THREE.Vector3(vertexCoords[i * 9], vertexCoords[i * 9 + 1], vertexCoords[i * 9 + 2]),
-        new THREE.Vector3(vertexCoords[i * 9 + 3], vertexCoords[i * 9 + 4], vertexCoords[i * 9 + 5]),
-        new THREE.Vector3(vertexCoords[i * 9 + 6], vertexCoords[i * 9 + 7], vertexCoords[i * 9 + 8]),
-      );
-      tri.getNormal(normalVector);
-
-      normalVector.applyMatrix3(normalMatrix).normalize();
-
-      // Draw the normal at the center of the face
-      faceCenter.addVectors(tri.a, tri.b);
-      faceCenter.add(tri.c);
-      faceCenter.divideScalar(3);
-
-      // Convert center from local space to world space
-      object.mesh.localToWorld(faceCenter);
-
-      if (object.normalHelpers[i]) {
-        object.normalHelpers[i].position.copy(faceCenter);
-        object.normalHelpers[i].setDirection(normalVector);
-      } else {
-        const normalHelper = new THREE.ArrowHelper(normalVector, faceCenter, 2, 0x00ff00);
-        scene.add(normalHelper);
-        object.normalHelpers[i] = normalHelper;
-      }
-
-      if (object.normals[i]) {
-        object.normals[i].copy(normalVector);
-      } else {
-        object.normals[i] = normalVector.clone();
-      }
-    }
-  };
-
   // Create GUI
   gui.width = 150;
   gui.add(params, 'd20Count').name('d20').min(0).step(1);
@@ -305,7 +241,9 @@ function init() {
 
   // Roll dice on page load
   rollDice();
-  
+
+  const downVector = new THREE.Vector3(0, -1, 0);
+
   // Render loop
   function animate() {
     requestAnimationFrame(animate);
@@ -320,9 +258,13 @@ function init() {
       object.mesh.position.copy(object.body.position);
       object.mesh.quaternion.copy(object.body.quaternion);
 
-      updateFaceNormals(object);
+      updateFaceNormals(scene, object);
 
-      // TODO: pick normal pointing down, color it red
+      // Pick normal pointing down, color its helper red
+      const downNormalIndex = findDownFacingNormalIndex(downVector, object);
+      object.normalHelpers.forEach((normalHelper, i) => {
+        normalHelper.setColor(i === downNormalIndex ? 0xff0000 : 0x00ff00);
+      });
     });
 
     stats.end();

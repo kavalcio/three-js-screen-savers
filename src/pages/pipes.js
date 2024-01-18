@@ -2,7 +2,7 @@ import * as THREE from 'three';
 import { Vector3 } from 'three';
 
 import { initializeScene } from '/src/pages/template';
-import { getRandomColor, getRandomInt } from '/src/utils/utils';
+import { getRandomColor, getRandomInt } from '/src/utils/general';
 
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;

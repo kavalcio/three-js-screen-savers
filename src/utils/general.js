@@ -13,6 +13,8 @@ export const getRandomColor = () => {
   return '#' + (0x1000000 + rgb).toString(16).slice(1);
 };
 
+export const findIndexOfMaxValue = (a) => a.reduce((iMax, x, i, arr) => x > arr[iMax] ? i : iMax, 0);
+
 /* Based on formula by Arnauld: https://codegolf.stackexchange.com/a/259638 */
 export const getNormalizedBayerMatrix = (n) => {
   let g;

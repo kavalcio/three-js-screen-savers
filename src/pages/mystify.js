@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { getRandomColor } from '/src/utils/utils';
+import { getRandomColor } from '/src/utils/general';
 import { initializeScene } from '/src/pages/template';
 
 // TODO: change color over time
