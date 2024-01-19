@@ -46,7 +46,7 @@ const createObjectTemplate = () => ({
 const icosahedronGeometry = new THREE.IcosahedronGeometry(DIE_SCALE, 0);
 const dodecahedronGeometry = new THREE.DodecahedronGeometry(DIE_SCALE, 0);
 const octahedronGeometry = new THREE.OctahedronGeometry(DIE_SCALE, 0);
-const boxGeometry = new THREE.BoxGeometry(DIE_SCALE, DIE_SCALE, DIE_SCALE);
+const boxGeometry = new THREE.BoxGeometry(DIE_SCALE, DIE_SCALE, DIE_SCALE).toNonIndexed();
 const tetrahedronGeometry = new THREE.TetrahedronGeometry(DIE_SCALE, 0);
 
 // const material = new THREE.MeshNormalMaterial();
