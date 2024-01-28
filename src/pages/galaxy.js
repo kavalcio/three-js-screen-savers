@@ -1,14 +1,12 @@
 import * as THREE from 'three';
 
 import { initializeScene } from '/src/pages/template';
-import { getRandomPolarCoordinate } from '../utils/general';
-
-// TODO: use a particle other than square
-// TODO: rotate galaxy?
+import { getRandomPolarCoordinate } from '/src/utils/general';
+import starImage from '/src/assets/star.png';
 
 const params = {
-  particleCount: 30000,
-  particleSize: 0.03,
+  particleCount: 250000,
+  particleSize: 0.02,
   branches: 6,
   branchRadius: 5,
   spin: 0.2,
@@ -26,12 +24,15 @@ const {
   controls,
 } = initializeScene();
 
-camera.position.set(8, 8, 8);
+camera.position.set(7, 4, 7);
 controls.update();
 
+let spinDirection = 1;
 let material = null;
 let geometry = null;
 let points = null;
+
+const particleTexture = new THREE.TextureLoader().load(starImage);
 
 const generateGalaxy = () => {
   // Remove old particles
@@ -72,6 +73,8 @@ const generateGalaxy = () => {
     depthWrite: false,
     blending: THREE.AdditiveBlending,
     vertexColors: true,
+    transparent: true,
+    alphaMap: particleTexture,
   });
   geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
@@ -79,15 +82,17 @@ const generateGalaxy = () => {
 
   points = new THREE.Points(geometry, material);
   scene.add(points);
+
+  spinDirection = params.spin > 0 ? 1 : -1;
 };
 
 generateGalaxy();
 
 // Create GUI
 gui.width = 360;
-gui.add(params, 'particleCount', 100, 100000, 100).onFinishChange(generateGalaxy);
-gui.add(params, 'particleSize', 0.001, 0.1).onFinishChange(generateGalaxy);
-gui.add(params, 'branches', 1, 15, 1).onFinishChange(generateGalaxy);
+gui.add(params, 'particleCount', 5000, 500000, 100).onFinishChange(generateGalaxy);
+gui.add(params, 'particleSize', 0.005, 0.15).onFinishChange(generateGalaxy);
+gui.add(params, 'branches', 2, 15, 1).onFinishChange(generateGalaxy);
 gui.add(params, 'branchRadius', 1, 10).onFinishChange(generateGalaxy);
 gui.add(params, 'spin', -1, 1).onFinishChange(generateGalaxy);
 gui.add(params, 'radialRandomness', 0, 1).onFinishChange(generateGalaxy);
@@ -97,6 +102,8 @@ gui.addColor(params, 'outerColor').onFinishChange(generateGalaxy);
 const tick = () => {
   requestAnimationFrame(tick);
   stats.begin();
+
+  geometry.rotateY(0.001 * spinDirection);
 
   stats.end();
   renderer.render(scene, camera);
