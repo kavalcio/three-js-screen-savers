@@ -7,6 +7,7 @@
 - finish dice demo
 - use a better physics library for dice demo
 - use lil.gui instead of dat.gui?
+- call .dispose on unused objects
 
 ## Demo ideas
 

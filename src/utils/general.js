@@ -22,3 +22,12 @@ export const getNormalizedBayerMatrix = (n) => {
   const matrix = [...Array(1<<t)].map((_,y,a) => a.map(g=(k=t,x)=>k--&&4*g(k,x)|2*(x>>k)+3*(y>>k&1)&3));
   return matrix.flat().map(el => el / Math.pow(2, 2 * n + 2));
 };
+
+export const getRandomPolarCoordinate = (radius) => {
+  const theta = Math.random() * Math.PI * 2;
+  const phi = Math.random() * Math.PI * 2;
+  const x = radius * Math.sin(theta) * Math.cos(phi);
+  const y = radius * Math.sin(theta) * Math.sin(phi);
+  const z = radius * Math.cos(theta);
+  return { x, y, z };
+};

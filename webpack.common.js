@@ -12,6 +12,7 @@ module.exports = {
     dice: './src/pages/dice.js',
     postprocessing: './src/pages/postprocessing.js',
     textureLayers: './src/pages/texture-layers.js',
+    galaxy: './src/pages/galaxy.js',
   },
   module: {
     rules: [
@@ -99,6 +100,13 @@ module.exports = {
       template: './template.html',
       chunks: ['textureLayers'],
       filename: './texture-layers.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Galaxy Generator',
+      template: './template.html',
+      chunks: ['galaxy'],
+      filename: './galaxy.html',
     }),
   ],
   output: {
