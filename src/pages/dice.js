@@ -1,9 +1,9 @@
 import * as THREE from 'three';
 import * as CANNON from 'cannon-es';
 
-import { initializeScene } from '/src/pages/template';
-import { getPolyhedronShape, updateFaceNormals } from '/src/utils/dice';
-import { findDownFacingNormalIndex } from '/src/utils/dice';
+import { initializeScene } from 'pages/template';
+import { getPolyhedronShape, updateFaceNormals } from 'utils/dice';
+import { findDownFacingNormalIndex } from 'utils/dice';
 
 const DIE_TYPES = {
   D4: 'D4',
@@ -28,7 +28,8 @@ const WALL_HEIGHT = 3;
 let params = {
   'd4Count': 1,
   'd6Count': 0,
-  'd8Count':0,
+  'd8Count': 0,
+  'd10Count': 0,
   'd12Count': 1,
   'd20Count': 0,
 };
@@ -181,7 +182,7 @@ function init() {
   
   const rollDice = () => {
     // Return early if there are too many dice
-    if (params.d20Count + params.d12Count + params.d8Count + params.d6Count + params.d4Count > MAX_DICE_COUNT) {
+    if (params.d20Count + params.d12Count + params.d10Count + params.d8Count + params.d6Count + params.d4Count > MAX_DICE_COUNT) {
       alert(`You can't roll more than ${MAX_DICE_COUNT} dice at once!`);
       return;
     }
@@ -207,6 +208,8 @@ function init() {
       scene.add(mesh);
       world.addBody(body);
     }
+    // TODO: Create param.d10Count pentagonal trapezohedrons
+
     // Create param.d8Count octahedrons
     for (let i = 0; i < params.d8Count; i++) {
       const { mesh, body } = createDie({ geometry: octahedronGeometry });
@@ -253,7 +256,7 @@ function init() {
     const deltaTime = clock.getDelta();
     world.step(1 / 60, deltaTime, 3);
 
-    // Move meshes
+    // Update objects
     objectsToUpdate.forEach((object) => {
       object.mesh.position.copy(object.body.position);
       object.mesh.quaternion.copy(object.body.quaternion);

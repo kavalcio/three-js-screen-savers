@@ -1,6 +1,6 @@
 import * as THREE from 'three';
 
-import { initializeScene } from '/src/pages/template';
+import { initializeScene } from 'pages/template';
 import {
   createSelectiveUnrealBloomComposer,
   checkObjectNonBloomed,

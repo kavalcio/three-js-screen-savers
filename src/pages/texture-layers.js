@@ -2,7 +2,7 @@
 
 import * as THREE from 'three';
 
-import { initializeScene } from '/src/pages/template';
+import { initializeScene } from 'pages/template';
 
 function init() {
   const {

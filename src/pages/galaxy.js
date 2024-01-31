@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 
-import { initializeScene } from '/src/pages/template';
-import { getRandomPolarCoordinate } from '/src/utils/general';
-import starImage from '/src/assets/star.png';
+import { initializeScene } from 'pages/template';
+import { getRandomPolarCoordinate } from 'utils/general';
+import starImage from 'assets/star.png';
 
 const params = {
   particleCount: 250000,
