@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import { Vector3 } from 'three';
 
-import { initializeScene } from '/src/pages/template';
-import { getRandomColor, getRandomInt } from '/src/utils/general';
+import { initializeScene } from 'pages/template';
+import { getRandomColor, getRandomInt } from 'utils/general';
 
 const PIPE_LENGTH_MAX = 15;
 const PIPE_LENGTH_MIN = 5;
@@ -35,6 +35,7 @@ let paramsToApply = { ...params };
 let pipeList = [];
 
 // TODO: prevent pipe from overlapping itself
+// TODO: remove old pipes as new ones are created. make max pipe limit a variable
 function init() {
   const {
     scene,

@@ -117,6 +117,9 @@ module.exports = {
       filename: './solar-system.html',
     }),
   ],
+  resolve: {
+    modules: [path.resolve(__dirname, 'src'), 'node_modules'],
+  },
   output: {
     filename: '[name].bundle.js',
     path: path.resolve(__dirname, 'dist'),
