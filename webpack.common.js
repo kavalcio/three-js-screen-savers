@@ -13,6 +13,7 @@ module.exports = {
     postprocessing: './src/pages/postprocessing.js',
     textureLayers: './src/pages/texture-layers.js',
     galaxy: './src/pages/galaxy.js',
+    solarSystem: './src/pages/solar-system.js',
   },
   module: {
     rules: [
@@ -107,6 +108,13 @@ module.exports = {
       template: './template.html',
       chunks: ['galaxy'],
       filename: './galaxy.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Solar System',
+      template: './template.html',
+      chunks: ['solarSystem'],
+      filename: './solar-system.html',
     }),
   ],
   output: {
