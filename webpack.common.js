@@ -14,6 +14,7 @@ module.exports = {
     textureLayers: './src/pages/texture-layers.js',
     galaxy: './src/pages/galaxy.js',
     solarSystem: './src/pages/solar-system.js',
+    vertexSnapping: './src/pages/vertex-snapping.js',
   },
   module: {
     rules: [
@@ -115,6 +116,13 @@ module.exports = {
       template: './template.html',
       chunks: ['solarSystem'],
       filename: './solar-system.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Vertex Snapping',
+      template: './template.html',
+      chunks: ['vertexSnapping'],
+      filename: './vertex-snapping.html',
     }),
   ],
   resolve: {
