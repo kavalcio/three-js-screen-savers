@@ -8,12 +8,12 @@ https://thebookofshaders.com/00/
 
 import * as THREE from 'three';
 
-import vertexShader from 'shaders/vertex.glsl';
-import bayerFragmentShader from 'shaders/fragment-bayer.glsl';
-import blueFragmentShader from 'shaders/fragment-blue.glsl';
-import fixedFragmentShader from 'shaders/fragment-fixed.glsl';
-import randomFragmentShader from 'shaders/fragment-random.glsl';
-import originalFragmentShader from 'shaders/fragment-original.glsl';
+import vertexShader from 'shaders/dither/vertex.glsl';
+import bayerFragmentShader from 'shaders/dither/fragment-bayer.glsl';
+import blueFragmentShader from 'shaders/dither/fragment-blue.glsl';
+import fixedFragmentShader from 'shaders/dither/fragment-fixed.glsl';
+import randomFragmentShader from 'shaders/dither/fragment-random.glsl';
+import originalFragmentShader from 'shaders/dither/fragment-original.glsl';
 import bgImage from 'assets/xp_background.jpg';
 
 /* Blue noise mask downloaded from: http://momentsingraphics.de/BlueNoise.html */

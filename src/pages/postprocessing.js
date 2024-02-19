@@ -6,10 +6,10 @@ import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 import { SMAAPass } from 'three/addons/postprocessing/SMAAPass.js';
 
-import vertexShader from 'shaders/vertex.glsl';
-import chromaticAberrationFragmentShader from 'shaders/fragment-chromatic-aberration.glsl';
-import filmGrainFragmentShader from 'shaders/fragment-film-grain.glsl';
-import bayerFragmentShader from 'shaders/fragment-bayer.glsl';
+import vertexShader from 'shaders/dither/vertex.glsl';
+import chromaticAberrationFragmentShader from 'shaders/postprocessing/fragment-chromatic-aberration.glsl';
+import filmGrainFragmentShader from 'shaders/postprocessing/fragment-film-grain.glsl';
+import bayerFragmentShader from 'shaders/dither/fragment-bayer.glsl';
 
 import { getNormalizedBayerMatrix } from 'utils/general';
 import { initializeScene } from 'pages/template';
