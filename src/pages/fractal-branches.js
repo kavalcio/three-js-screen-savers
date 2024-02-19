@@ -41,10 +41,10 @@ function init() {
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
   scene.add(ambientLight);
-  const directionalLight = new THREE.DirectionalLight(0xdddddd, 1);
+  const directionalLight = new THREE.DirectionalLight(0xdddddd, 3);
   directionalLight.position.set(1, 0, 1);
   scene.add(directionalLight);
-  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 1);
+  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 4);
   directionalLight2.position.set(-1, 1, 1);
   scene.add(directionalLight2);
 

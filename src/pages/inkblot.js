@@ -19,13 +19,6 @@ renderer.setClearColor(0x333333, 1);
 camera.position.set(0, 0, 30);
 controls.update();
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
-directionalLight.position.set(1, 1, 1);
-scene.add(directionalLight);
-
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.2);
-scene.add(ambientLight);
-
 const material = new THREE.RawShaderMaterial({
   vertexShader,
   fragmentShader,

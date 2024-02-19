@@ -79,7 +79,7 @@ function init() {
   const ambientLight = new THREE.AmbientLight(0x707070);
   scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 4);
   directionalLight.position.x = 1;
   directionalLight.position.z = 1;
   scene.add(directionalLight);
@@ -167,8 +167,7 @@ function init() {
       } else {
         // Create sphere at corner
         const geometry = new THREE.SphereGeometry(params.pipeRadius, 32, 32);
-        const material = new THREE.MeshPhongMaterial({ color: pipe.mesh.material.color.getHex() });
-        const sphere = new THREE.Mesh(geometry, material);
+        const sphere = new THREE.Mesh(geometry, pipe.mesh.material);
         sphere.position.copy(pipe.end);
         scene.add(sphere);
 

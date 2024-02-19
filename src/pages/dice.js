@@ -75,10 +75,10 @@ function init() {
   camera.lookAt(scene.position);
 
   // Create lights
-  const ambientLight = new THREE.AmbientLight(0x404040);
+  const ambientLight = new THREE.AmbientLight(0x404040, 3);
   scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xdddddd, 0.6);
+  const directionalLight = new THREE.DirectionalLight(0xdddddd, 3);
   directionalLight.position.set(-5, 30, 20);
   directionalLight.lookAt(scene.position);
   directionalLight.castShadow = true;
@@ -93,7 +93,7 @@ function init() {
   const shadowHelper = new THREE.CameraHelper(directionalLight.shadow.camera);
   scene.add(shadowHelper);
 
-  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 0.2);
+  const directionalLight2 = new THREE.DirectionalLight(0xdddddd, 2);
   directionalLight2.position.set(10, 5, 10);
   directionalLight2.lookAt(scene.position);
   scene.add(directionalLight2);

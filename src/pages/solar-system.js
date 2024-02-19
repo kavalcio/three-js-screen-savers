@@ -29,10 +29,10 @@ const {
 } = createSelectiveUnrealBloomComposer({ renderer, scene, camera });
 
 // Create lights
-const ambientLight = new THREE.AmbientLight(0x404040, 0.5);
+const ambientLight = new THREE.AmbientLight(0x404040, 6);
 scene.add(ambientLight);
 
-const pointLight = new THREE.PointLight(0xffffff, 1);
+const pointLight = new THREE.PointLight(0xffffff, 6, 0, 0.5);
 pointLight.position.set(0, 0, 0);
 scene.add(pointLight);
 

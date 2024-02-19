@@ -24,7 +24,6 @@ let params = {
 };
 let paramsToApply = { ...params };
 
-// TODO: make color cycle over time
 function init() {
   const {
     scene,

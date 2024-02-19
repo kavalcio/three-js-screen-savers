@@ -1,13 +1,6 @@
 import * as THREE from 'three';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { ShaderPass } from 'three/addons/postprocessing/ShaderPass.js';
 
 import { initializeScene } from 'pages/template';
-
-// import vertexShader from 'shaders/vertex.glsl';
-import originalFragmentShader from 'shaders/fragment-original.glsl';
-import vertexSnappingShader from 'shaders/vertex-vertex-snapping.glsl';
 
 const {
   scene,
@@ -23,7 +16,7 @@ const {
 camera.position.set(8, 0, 60);
 controls.update();
 
-const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+const directionalLight = new THREE.DirectionalLight(0xffffff, 2);
 directionalLight.position.set(1, 1, 1);
 scene.add(directionalLight);
 

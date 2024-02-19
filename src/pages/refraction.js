@@ -24,8 +24,6 @@ function init() {
   camera.fov = 65;
   camera.updateProjectionMatrix();
 
-  gui.add(params, 'distance', -120, -7);
-
   // Create lights
   const ambientLight = new THREE.AmbientLight(0x404040);
   scene.add(ambientLight);
@@ -56,10 +54,16 @@ function init() {
 
   // Create background
   const bgTexture = new THREE.TextureLoader().load(bgImage);
+  bgTexture.colorSpace = THREE.SRGBColorSpace;
   const bgGeometry = new THREE.PlaneGeometry(100, 60);
   const bgMaterial = new THREE.MeshBasicMaterial({ map: bgTexture });
   const bgMesh = new THREE.Mesh(bgGeometry, bgMaterial);
   scene.add(bgMesh);
+
+  gui.add(params, 'distance', -120, -7);
+  gui.add(sphereMaterial, 'roughness', 0, 1);
+  gui.add(sphereMaterial, 'transmission', 0, 1);
+  gui.add(sphereMaterial, 'thickness', 0, 20);
 
   function animate() {
     requestAnimationFrame(animate);

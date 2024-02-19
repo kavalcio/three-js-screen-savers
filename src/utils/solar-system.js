@@ -45,7 +45,9 @@ export const createSelectiveUnrealBloomComposer = ({ renderer, scene, camera }) 
         uniform sampler2D bloomTexture;
         varying vec2 vUv;
         void main() {
-          gl_FragColor = (texture2D(baseTexture, vUv) + vec4(1.0) * texture2D(bloomTexture, vUv));
+          gl_FragColor = (texture2D(baseTexture, vUv) + vec4(0.4) * texture2D(bloomTexture, vUv));
+          // #include <tonemapping_fragment>
+          // #include <encodings_fragment>
         }
       `,
     }),

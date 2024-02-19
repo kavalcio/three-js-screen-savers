@@ -74,6 +74,7 @@ function init() {
 
   // Postprocessing
   const composer = new EffectComposer(renderer);
+  composer.outputColorSpace = THREE.LinearSRGBColorSpace ;
   const renderPass = new RenderPass(scene, camera);
   composer.addPass(renderPass);
   const chromaticAberrationPass = new ShaderPass(ChromaticAberrationShader, 'uMap');
@@ -88,10 +89,10 @@ function init() {
   filmGrainPass.enabled = false;
 
   // Create lights
-  const ambientLight = new THREE.AmbientLight(0x404040);
+  const ambientLight = new THREE.AmbientLight(0x404040, 6);
   scene.add(ambientLight);
 
-  const directionalLight = new THREE.DirectionalLight(0xffffff, 1);
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 3);
   directionalLight.position.x = 1;
   directionalLight.position.z = 1;
   scene.add(directionalLight);

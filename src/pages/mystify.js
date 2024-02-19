@@ -3,9 +3,6 @@ import * as THREE from 'three';
 import { getRandomColor } from 'utils/general';
 import { initializeScene } from 'pages/template';
 
-// TODO: change color over time
-// TODO: add option to toggle color randomization and option to shift colors over time
-
 const WIDTH = 120;
 const HEIGHT = 80;
 
