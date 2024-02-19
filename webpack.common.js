@@ -15,6 +15,7 @@ module.exports = {
     galaxy: './src/pages/galaxy.js',
     solarSystem: './src/pages/solar-system.js',
     vertexSnapping: './src/pages/vertex-snapping.js',
+    inkblot: './src/pages/inkblot.js',
   },
   module: {
     rules: [
@@ -123,6 +124,13 @@ module.exports = {
       template: './template.html',
       chunks: ['vertexSnapping'],
       filename: './vertex-snapping.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Inkblot Generator',
+      template: './template.html',
+      chunks: ['inkblot'],
+      filename: './inkblot.html',
     }),
   ],
   resolve: {
