@@ -1,8 +1,10 @@
 precision mediump float;
 
 varying vec2 vUv;
+
 uniform sampler2D uMap;
 uniform float uTime;
+uniform float uSpeed;
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -83,8 +85,27 @@ float cnoise(vec3 P){
 
 void main()
 {
-  vec3 pos = vec3(0.5 - abs(vUv.x - 0.5), vUv.y, uTime / 40.);
-  float strength = 1. - step(0.2, cnoise(pos * 5.0) * 2.0 + cnoise(pos * 20.0) + cnoise(pos * 70.0) * 0.15);
+  vec3 pos = vec3(0.5 - abs(vUv.x - 0.5), vUv.y, uTime * uSpeed / 350.);
+  
+  float strength = 0.0;
+
+  // Create noise patterns
+  strength += cnoise(pos * 5.0) * 4.0;
+  strength += cnoise(pos * 20.0);
+  strength += cnoise(pos * 70.0) * 0.15;
+
+  // strength = min(1.0, strength);
+
+  // Add center bias
+  strength -= smoothstep(0.2, 0.7, length((vUv - vec2(0.5, 0.5)))) * 3.0;
+
+  // 
+  strength = smoothstep(0.2, 0.27, strength);
+
+  // Invert colors
+  strength = 1. - strength;
+
+  // strength = smoothstep(0.2, 0.7, length((vUv - vec2(0.5, 0.5)))) * 6.0;
 
   gl_FragColor = vec4(strength, strength, strength, 1.0);
 }

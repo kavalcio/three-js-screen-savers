@@ -4,6 +4,9 @@ import { initializeScene } from 'pages/template';
 
 import vertexShader from 'shaders/inkblot/vertex.glsl';
 import fragmentShader from 'shaders/inkblot/fragment.glsl';
+import { smootherstep } from 'three/src/math/MathUtils';
+
+const params = { stepSize: 3 };
 
 const {
   scene,
@@ -16,7 +19,7 @@ const {
 
 renderer.setClearColor(0x333333, 1);
 
-camera.position.set(0, 0, 30);
+camera.position.set(0, 0, 20);
 controls.update();
 
 const material = new THREE.RawShaderMaterial({
@@ -24,10 +27,9 @@ const material = new THREE.RawShaderMaterial({
   fragmentShader,
   uniforms: {
     uTime: { value: 0 },
+    uSpeed: { value: 10.0 },
   },
   side: THREE.DoubleSide,
-  // wireframe: true,
-  // transparent: true,
 });
 
 const object = new THREE.Mesh(
@@ -38,13 +40,21 @@ scene.add(object);
 
 const clock = new THREE.Clock();
 
+gui.add(material.uniforms.uSpeed, 'value').min(0).max(70).step(0.01).name('Speed');
+gui.add(params, 'stepSize').min(0).max(10).step(1).name('Time Step Size');
+
+
 const tick = () => {
   requestAnimationFrame(tick);
   stats.begin();
 
   const elapsedTime = clock.getElapsedTime();
 
-  material.uniforms.uTime.value = elapsedTime;
+  if (params.stepSize === 0) {
+    material.uniforms.uTime.value = elapsedTime;
+  } else {
+    material.uniforms.uTime.value = Math.floor(elapsedTime / params.stepSize) + smootherstep(elapsedTime % params.stepSize, 0, params.stepSize);
+  }
 
   renderer.render(scene, camera);
   stats.end();
