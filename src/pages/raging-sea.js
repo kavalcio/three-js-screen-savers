@@ -62,10 +62,10 @@ gui.width = 300;
 
 const colorFolder = gui.addFolder('Color');
 colorFolder.open();
-colorFolder.addColor(params, 'peakColor').onChange((value) => {
+colorFolder.addColor(params, 'peakColor').name('Peak Color').onChange((value) => {
   material.uniforms.uPeakColor.value.set(value);
 });
-colorFolder.addColor(params, 'valleyColor').onChange((value) => {
+colorFolder.addColor(params, 'valleyColor').name('Valley Color').onChange((value) => {
   material.uniforms.uValleyColor.value.set(value);
 });
 colorFolder.add(material.uniforms.uColorOffset, 'value').min(0).max(3).step(0.01).name('Color Offset');
