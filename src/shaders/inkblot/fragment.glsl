@@ -5,6 +5,7 @@ varying vec2 vUv;
 uniform sampler2D uMap;
 uniform float uTime;
 uniform float uSpeed;
+uniform float uThreshold;
 
 #define M_PI 3.1415926535897932384626433832795
 
@@ -87,25 +88,25 @@ void main()
 {
   vec3 pos = vec3(0.5 - abs(vUv.x - 0.5), vUv.y, uTime * uSpeed / 350.);
   
-  float strength = 0.0;
+  float black = 0.0;
 
   // Create noise patterns
-  strength += cnoise(pos * 5.0) * 4.0;
-  strength += cnoise(pos * 20.0);
-  strength += cnoise(pos * 70.0) * 0.15;
-
-  // strength = min(1.0, strength);
+  black += cnoise(pos * 5.0) * 4.0;
+  black += cnoise(pos * 20.0);
+  black += cnoise(pos * 70.0) * 0.15;
 
   // Add center bias
-  strength -= smoothstep(0.2, 0.7, length((vUv - vec2(0.5, 0.5)))) * 3.0;
+  black -= smoothstep(0.2, 0.7, length((vUv - vec2(0.5, 0.5)))) * 3.0;
 
   // 
-  strength = smoothstep(0.2, 0.27, strength);
+  black = smoothstep(uThreshold, uThreshold + 0.07, black);
 
   // Invert colors
-  strength = 1. - strength;
+  black = 1. - black;
 
   // strength = smoothstep(0.2, 0.7, length((vUv - vec2(0.5, 0.5)))) * 6.0;
+
+  float strength = black;
 
   gl_FragColor = vec4(strength, strength, strength, 1.0);
 }

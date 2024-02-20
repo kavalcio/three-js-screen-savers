@@ -1,10 +1,10 @@
 import * as THREE from 'three';
+import { smootherstep } from 'three/src/math/MathUtils';
 
 import { initializeScene } from 'pages/template';
 
 import vertexShader from 'shaders/inkblot/vertex.glsl';
 import fragmentShader from 'shaders/inkblot/fragment.glsl';
-import { smootherstep } from 'three/src/math/MathUtils';
 
 const params = { stepSize: 3 };
 
@@ -28,6 +28,7 @@ const material = new THREE.RawShaderMaterial({
   uniforms: {
     uTime: { value: 0 },
     uSpeed: { value: 10.0 },
+    uThreshold: { value: 0.2 },
   },
   side: THREE.DoubleSide,
 });
@@ -41,8 +42,8 @@ scene.add(object);
 const clock = new THREE.Clock();
 
 gui.add(material.uniforms.uSpeed, 'value').min(0).max(70).step(0.01).name('Speed');
+gui.add(material.uniforms.uThreshold, 'value').min(-1).max(1).step(0.01).name('Threshold');
 gui.add(params, 'stepSize').min(0).max(10).step(1).name('Time Step Size');
-
 
 const tick = () => {
   requestAnimationFrame(tick);
