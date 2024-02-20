@@ -1,10 +1,3 @@
-uniform mat4 projectionMatrix;
-uniform mat4 viewMatrix;
-uniform mat4 modelMatrix;
-
-attribute vec3 position;
-attribute vec2 uv;
-
 uniform float uTime;
 
 // Color uniforms
@@ -132,7 +125,7 @@ void main()
   }
 
   modelPosition.y += elevation;
-  vElevation = (elevation + uColorOffset) / uColorDamping;
+  vElevation = min(1.0, (elevation + uColorOffset) / uColorDamping);
 
   vec4 viewPosition = viewMatrix * modelPosition;
 

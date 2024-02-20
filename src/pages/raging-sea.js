@@ -8,7 +8,7 @@ import fragmentShader from 'shaders/raging-sea/fragment.glsl';
 // TODO: make plane large and add fog so that you can't see the edges?
 
 const params = {
-  peakColor: 0xa0ffe5,
+  peakColor: 0xa0ffe8,
   valleyColor: 0x184650,
 };
 
@@ -25,7 +25,7 @@ camera.position.set(-10, 15, 20);
 camera.lookAt(scene.position);
 controls.update();
 
-const material = new THREE.RawShaderMaterial({
+const material = new THREE.ShaderMaterial({
   vertexShader,
   fragmentShader,
   uniforms: {
@@ -33,8 +33,8 @@ const material = new THREE.RawShaderMaterial({
 
     uPeakColor: { value: new THREE.Color(params.peakColor) },
     uValleyColor: { value: new THREE.Color(params.valleyColor) },
-    uColorOffset: { value: 0.4 },
-    uColorDamping: { value: 2 },
+    uColorOffset: { value: 0.9 },
+    uColorDamping: { value: 4.5 },
 
     uSinWaveFrequency: { value: new THREE.Vector2(0.4, 0.3) },
     uWaveAmplitude: { value: 0.8 },
