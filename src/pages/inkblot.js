@@ -6,6 +6,9 @@ import { initializeScene } from 'pages/template';
 import vertexShader from 'shaders/inkblot/vertex.glsl';
 import fragmentShader from 'shaders/inkblot/fragment.glsl';
 
+// TODO: make the plane rectangular?
+// TODO: when we set speed to 0, we always get the same inkblot. can we randomize it?
+
 const params = { stepSize: 3 };
 
 const {

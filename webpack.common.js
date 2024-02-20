@@ -16,6 +16,7 @@ module.exports = {
     solarSystem: './src/pages/solar-system.js',
     vertexSnapping: './src/pages/vertex-snapping.js',
     inkblot: './src/pages/inkblot.js',
+    ragingSea: './src/pages/raging-sea.js',
   },
   module: {
     rules: [
@@ -131,6 +132,13 @@ module.exports = {
       template: './template.html',
       chunks: ['inkblot'],
       filename: './inkblot.html',
+    }),
+    new HtmlWebpackPlugin({
+      hash: true,
+      title: 'Raging Sea',
+      template: './template.html',
+      chunks: ['ragingSea'],
+      filename: './raging-sea.html',
     }),
   ],
   resolve: {
