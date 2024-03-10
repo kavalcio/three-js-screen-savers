@@ -4,6 +4,7 @@ https://github.com/mrdoob/three.js/blob/1a241ef10048770d56e06d6cd6a64c76cc720f95
 https://threejs.org/examples/?q=post#webgl_postprocessing
 https://threejs.org/examples/?q=postpro#webgl_postprocessing_rgb_halftone
 https://thebookofshaders.com/00/
+https://www.mia.uni-saarland.de/Research/IP_Halftoning.shtml
 */
 
 import * as THREE from 'three';
@@ -23,7 +24,7 @@ import { initializeScene } from 'pages/template';
 import { getNormalizedBayerMatrix } from 'utils/general';
 
 /* TODOS:
-- Add variable dithering algorithm, try to get all the ones in the wikipedia article
+- Add halftone dithering matrix method - Is this the same thing as stippling?
 - Add variable dark and bright color options
 - Implement non-monochrome dithering
 - Add text on screen to show which dithering algorithm is being used
